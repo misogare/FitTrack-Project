@@ -1,3 +1,7 @@
+/* ✅ Tailwind CSS v4 way */
+@import "tailwindcss";
+
+/* keep everything below that was already in the file */
 :root {
   font-family: Arial, Helvetica, sans-serif;
   color: #171717;
