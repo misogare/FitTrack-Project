@@ -1,36 +1,45 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import './App.css';
+import { AuthProvider } from './context/AuthContext';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
+import Goals from './pages/Goals';
+import Login from './pages/Login';
+import Nutrition from './pages/Nutrition';
+import Profile from './pages/Profile';
+import Register from './pages/Register';
+import Settings from './pages/Settings';
+import Workouts from './pages/Workouts';
+import Plans from './pages/Plans';
+import Analytics from './pages/Analytics';
+import ForgotPassword from './pages/ForgotPassword';
 
-function App() {
+export default function App() {
   return (
-    <main className="app-shell">
-      <section className="hero-card">
-        <p className="eyebrow">FitTrack</p>
-        <h1>Track your health, workouts, and goals.</h1>
-        <p className="subtitle">
-          A starter app for fitness planning with Australian-friendly formatting and a responsive dashboard.
-        </p>
-        <div className="cta-row">
-          <button type="button">Get Started</button>
-          <button type="button" className="secondary">View Dashboard</button>
-        </div>
-      </section>
-
-      <section className="stats-grid">
-        <div className="stat-card">
-          <span>Workouts</span>
-          <strong>12</strong>
-        </div>
-        <div className="stat-card">
-          <span>Calories</span>
-          <strong>1,420</strong>
-        </div>
-        <div className="stat-card">
-          <span>Goals</span>
-          <strong>4 active</strong>
-        </div>
-      </section>
-    </main>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/workouts" element={<Workouts />} />
+              <Route path="/plans" element={<Plans />} />
+              <Route path="/nutrition" element={<Nutrition />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
-
-export default App;
