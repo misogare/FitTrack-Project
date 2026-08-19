@@ -21,13 +21,50 @@ export const loginValidation = [
   body('password').notEmpty()
 ];
 
+
 export const workoutValidation = [
-  body('workout_type').trim().notEmpty().isLength({ max: 50 }),
-  body('duration_minutes').isInt({ min: 1, max: 1440 }),
-  body('intensity').isIn(['Low', 'Medium', 'High']),
-  body('calories_burned').optional().isInt({ min: 0 }),
-  body('workout_date').isISO8601(),
-  body('notes').optional().isLength({ max: 255 })
+  body('activity_name')
+    .trim()
+    .notEmpty()
+    .withMessage('Activity name is required')
+    .isLength({ max: 100 })
+    .withMessage('Activity name must be 100 characters or less'),
+
+  body('workout_type')
+    .trim()
+    .notEmpty()
+    .withMessage('Activity type is required'),
+
+  body('duration_minutes')
+    .isInt({ min: 1 })
+    .withMessage('Duration must be at least 1 minute'),
+
+  body('intensity')
+    .isIn(['Low', 'Medium', 'High'])
+    .withMessage('Invalid intensity'),
+
+  body('workout_date')
+    .isISO8601()
+    .withMessage('Valid workout date is required'),
+
+  body('calories_burned')
+    .optional({ nullable: true })
+    .isInt({ min: 0 })
+    .withMessage('Calories must be a positive number'),
+
+  body('notes')
+    .optional({ nullable: true })
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Notes must be 255 characters or less'),
+
+  body('plan_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 }),
+
+  body('plan_item_id')
+    .optional({ nullable: true })
+    .isInt({ min: 1 })
 ];
 
 export const mealValidation = [

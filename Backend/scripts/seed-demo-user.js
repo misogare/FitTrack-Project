@@ -76,22 +76,71 @@ async function seedDemoUser() {
     await connection.execute('DELETE FROM MEAL WHERE user_id = ?', [userId]);
 
     // Recent workouts for dashboard/activity views.
-    const workouts = [
-      ['Running', 35, 'Medium', 310, '2026-08-17', 'Morning run'],
-      ['Strength Training', 50, 'High', 420, '2026-08-15', 'Upper body session'],
-      ['Cycling', 45, 'Medium', 360, '2026-08-13', 'Outdoor cycling'],
-      ['Walking', 30, 'Low', 130, '2026-08-11', 'Evening walk'],
-      ['Yoga', 40, 'Low', 150, '2026-08-09', 'Recovery session']
-    ];
+  const workouts = [
+  [
+    'Morning 5K Run',
+    'Running',
+    35,
+    'Medium',
+    310,
+    '2026-08-17',
+    'Morning run'
+  ],
+  [
+    'Upper Body Strength',
+    'Strength Training',
+    50,
+    'High',
+    420,
+    '2026-08-15',
+    'Upper body session'
+  ],
+  [
+    'Outdoor Cycling',
+    'Cycling',
+    45,
+    'Medium',
+    360,
+    '2026-08-13',
+    'Outdoor cycling'
+  ],
+  [
+    'Evening Walk',
+    'Walking',
+    30,
+    'Low',
+    130,
+    '2026-08-11',
+    'Evening walk'
+  ],
+  [
+    'Recovery Yoga',
+    'Yoga',
+    40,
+    'Low',
+    150,
+    '2026-08-09',
+    'Recovery session'
+  ]
+];
 
     for (const workout of workouts) {
-      await connection.execute(
-        `INSERT INTO WORKOUT
-          (user_id, workout_type, duration_minutes, intensity, calories_burned, workout_date, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [userId, ...workout]
-      );
-    }
+  await connection.execute(
+    `INSERT INTO WORKOUT
+      (
+        user_id,
+        activity_name,
+        workout_type,
+        duration_minutes,
+        intensity,
+        calories_burned,
+        workout_date,
+        notes
+      )
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [userId, ...workout]
+  );
+}
 
     // Today's meals for the nutrition dashboard.
     const meals = [
@@ -133,7 +182,20 @@ async function seedDemoUser() {
        VALUES (?, ?, ?, ?, ?, ?, 'Active')`,
       [userId, 'Healthy weight', 70, 74, '2026-08-01', '2026-12-01']
     );
+const [planResult] = await connection.execute(
+  `INSERT INTO WORKOUT_PLAN
+    (user_id, plan_name, description, difficulty, duration_weeks, status)
+   VALUES (?, ?, ?, ?, ?, 'Active')`,
+  [
+    userId,
+    'Beginner Fitness Plan',
+    'Balanced weekly plan combining cardio, strength and recovery.',
+    'Beginner',
+    4
+  ]
+);
 
+const planId = planResult.insertId;
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value)
        VALUES (?, ?, ?), (?, ?, ?)`,
@@ -142,7 +204,38 @@ async function seedDemoUser() {
         weightGoal.insertId, '2026-08-17', 74
       ]
     );
-
+    await connection.execute(
+  `INSERT INTO SETTINGS
+    (
+      user_id,
+      daily_step_goal,
+      daily_workout_minutes,
+      daily_calorie_burn_goal,
+      daily_hydration_litres,
+      research_data_sharing,
+      email_reminders,
+      public_profile_visibility
+    )
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+   ON DUPLICATE KEY UPDATE
+      daily_step_goal = VALUES(daily_step_goal),
+      daily_workout_minutes = VALUES(daily_workout_minutes),
+      daily_calorie_burn_goal = VALUES(daily_calorie_burn_goal),
+      daily_hydration_litres = VALUES(daily_hydration_litres),
+      research_data_sharing = VALUES(research_data_sharing),
+      email_reminders = VALUES(email_reminders),
+      public_profile_visibility = VALUES(public_profile_visibility)`,
+  [
+    userId,
+    10000,
+    60,
+    500,
+    2.5,
+    false,
+    true,
+    false
+  ]
+);
     await connection.commit();
 
     console.log('\nFitTrack demo account is ready.');

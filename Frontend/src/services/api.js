@@ -26,9 +26,20 @@ export const api = {
   getProfile: () => request('/auth/profile'),
   updateProfile: (payload) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(payload) }),
   dashboard: () => request('/dashboard'),
-  workouts: () => request('/workouts'),
-  createWorkout: (payload) => request('/workouts', { method: 'POST', body: JSON.stringify(payload) }),
-  deleteWorkout: (id) => request(`/workouts/${id}`, { method: 'DELETE' }),
+  workouts: (params = {}) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') query.append(k, v);
+  });
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  return request(`/workouts${suffix}`);
+},
+
+dailyWorkoutSummary: () => request('/workouts/daily-summary'),
+
+createWorkout: (payload) => request('/workouts', { method: 'POST', body: JSON.stringify(payload) }),
+updateWorkout: (id, payload) => request(`/workouts/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+deleteWorkout: (id) => request(`/workouts/${id}`, { method: 'DELETE' }),
   meals: () => request('/meals'),
   createMeal: (payload) => request('/meals', { method: 'POST', body: JSON.stringify(payload) }),
   deleteMeal: (id) => request(`/meals/${id}`, { method: 'DELETE' }),
