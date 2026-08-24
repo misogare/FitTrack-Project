@@ -162,10 +162,10 @@ export default function ExerciseTable({ planItemId, canEdit = true }) {
             </>
           ) : (
             <>
-              <div className="exercise-cell">{ex.sets ?? '—'}</div>
-              <div className="exercise-cell">{ex.reps ?? '—'}</div>
-              <div className="exercise-cell">{ex.weight_kg != null ? `${ex.weight_kg} kg` : 'Bodyweight'}</div>
-              <div className="exercise-cell">{ex.rest_seconds != null ? `${ex.rest_seconds} sec` : '—'}</div>
+              <div className="exercise-cell" data-label="Sets">{ex.sets ?? '—'}</div>
+              <div className="exercise-cell" data-label="Reps">{ex.reps ?? '—'}</div>
+              <div className="exercise-cell" data-label="Weight">{ex.weight_kg != null ? `${ex.weight_kg} kg` : 'Bodyweight'}</div>
+              <div className="exercise-cell" data-label="Rest">{ex.rest_seconds != null ? `${ex.rest_seconds} sec` : '—'}</div>
               <div className="exercise-cell actions">
                 {canEdit && (
                   <>

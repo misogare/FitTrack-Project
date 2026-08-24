@@ -240,6 +240,7 @@
 
 .plan-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 8px;
   border-top: 1px solid #f0f1f3;
@@ -328,12 +329,14 @@
 
 .schedule-day-content {
   flex: 1;
+  min-width: 0;
 }
 
 .schedule-day-title {
   font-size: 13px;
   font-weight: 500;
   color: #0a0a0a;
+  overflow-wrap: break-word;
 }
 
 .schedule-day-meta {
@@ -355,6 +358,8 @@
   border-radius: 4px;
   border: 1px solid #f0f1f3;
   color: #737373;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .schedule-day-pill.today  { background: #0a0a0a; color: #fff; border-color: #0a0a0a; }
@@ -494,6 +499,69 @@
   text-align: center;
   color: #a3a3a3;
   font-size: 13px;
+}
+
+/* ============== WEEKLY SCHEDULE (mobile) ============== */
+@media (max-width: 480px) {
+  .schedule-day {
+    align-items: flex-start;
+  }
+
+  .schedule-day .button {
+    flex-shrink: 0;
+  }
+}
+
+/* ============== EXERCISE TABLE (mobile) ============== */
+@media (max-width: 640px) {
+  .exercise-row.header {
+    display: none;
+  }
+
+  .exercise-row.data {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    border: 1px solid #f0f1f3;
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .exercise-index {
+    display: none;
+  }
+
+  .exercise-name {
+    grid-column: 1 / -1;
+  }
+
+  .exercise-cell {
+    font-size: 13px;
+  }
+
+  .exercise-cell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #a3a3a3;
+    margin-bottom: 2px;
+  }
+
+  .exercise-cell.actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    border-top: 1px solid #f0f1f3;
+    padding-top: 10px;
+  }
+
+  .exercise-cell.actions::before {
+    display: none;
+  }
+
+  .exercise-input {
+    padding: 8px 10px;
+  }
 }
 
 /* ============== MODAL ============== */

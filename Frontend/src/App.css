@@ -68,6 +68,21 @@
 @media (max-width: 780px) { .site-header { height:auto; min-height:64px; } .site-header-inner { flex-wrap:wrap; padding:12px 0; } .public-nav,.app-nav { order:3; width:100%; overflow:auto; padding-bottom:2px; } .header-actions { margin-left:auto; } .user-menu { margin-left:auto; } .app-page { width:100%; padding:28px 16px 48px; } .page-header { align-items:flex-start; flex-direction:column; } .grid-4,.grid-3,.grid-2,.form-grid { grid-template-columns:1fr; } }
 @media (max-width: 520px) { .public-nav { display:none; } .brand { font-size:16px; } .button-sm { padding:6px 10px; } .user-menu .user-chip span:not(.avatar) { display:none; } }
 
+/* Mobile: keep the top nav on one line (icon-only), no horizontal scrolling */
+.user-area { position: relative; } /* anchor the profile dropdown to the avatar */
+
+@media (max-width: 780px) {
+  .site-header-inner { flex-wrap: nowrap; gap: 12px; }
+  .app-nav { order: initial; width: auto; overflow: visible; gap: 14px; }
+  .app-nav a { padding: 8px 6px; }
+  .app-nav a span { display: none; }
+}
+
+@media (max-width: 480px) {
+  .app-header .brand span:last-child { display: none; } /* icon-only brand mark */
+  .app-nav { gap: 10px; }
+}
+
 /* Landing */
 .landing { background:#fff; color:#171717; }
 .landing-hero { background:#fafafa; padding:88px 24px 80px; text-align:center; }

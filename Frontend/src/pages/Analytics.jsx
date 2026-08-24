@@ -788,7 +788,7 @@ export default function Analytics() {
                   <span><span className="legend-dot" style={{ background: '#d4d4d4' }} /> Fat</span>
                 </div>
               </div>
-              <div className="bar-chart" style={{ height: 140 }}>
+              <div className={`bar-chart ${macroChart.length > 10 ? 'many' : ''}`} style={{ height: 140 }}>
                 {macroChart.map((b, i) => (
                   <div className="bar-col" key={b.key}>
                     <div className="bar-track" style={{ maxWidth: 30 }}>
@@ -944,7 +944,7 @@ function BarChart({ data, goal, max, labelEvery, format, emptyText }) {
   const goalPct = (goal / max) * 100;
   return (
     <div>
-      <div className="bar-chart">
+      <div className={`bar-chart ${data.length > 10 ? 'many' : ''}`}>
         <div className="goal-baseline" style={{ bottom: `${Math.max(2, Math.min(96, goalPct))}%` }} title={`Goal ${fmt(goal)}`} />
         {data.map((b, i) => (
           <div className="bar-col" key={b.key}>

@@ -69,11 +69,11 @@
 }
 
 @media (max-width: 1050px) {
-  .analytics-kpis { grid-template-columns: 1fr 1fr; }
+  .analytics-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 560px) {
-  .analytics-kpis { grid-template-columns: 1fr; }
+  .analytics-kpis { grid-template-columns: minmax(0, 1fr); }
 }
 
 .akpi {
@@ -154,7 +154,24 @@
 
 @media (max-width: 1050px) {
   .analytics-grid-2,
-  .analytics-grid-3 { grid-template-columns: 1fr; }
+  .analytics-grid-3 { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Dense charts: drop the per-bar labels so bars stay inside the card on phones */
+@media (max-width: 640px) {
+  .bar-chart.many {
+    gap: 3px;
+  }
+
+  .bar-chart.many .bar-col > span {
+    display: none;
+  }
+
+  .bar-chart.many .bar-col:first-of-type > span,
+  .bar-chart.many .bar-col:last-of-type > span {
+    display: inline;
+    font-size: 10px;
+  }
 }
 
 .chart-card {
