@@ -110,8 +110,19 @@ export const waterLogValidation = [
 export const goalValidation = [
   body('goal_type').trim().notEmpty().isLength({ max: 50 }),
   body('target_value').isFloat({ min: 0 }),
+  body('start_value').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Start value must be a positive number'),
   body('start_date').isISO8601(),
   body('target_date').isISO8601(),
+  body('status').optional().isIn(['Active', 'Achieved', 'Abandoned'])
+];
+
+export const goalUpdateValidation = [
+  body('goal_type').optional().trim().notEmpty().isLength({ max: 50 }),
+  body('target_value').optional().isFloat({ min: 0 }),
+  body('start_value').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Start value must be a positive number'),
+  body('current_value').optional().isFloat({ min: 0 }),
+  body('start_date').optional().isISO8601(),
+  body('target_date').optional().isISO8601(),
   body('status').optional().isIn(['Active', 'Achieved', 'Abandoned'])
 ];
 

@@ -41,6 +41,11 @@ const paths = {
   trendUp: 'M3 17l6-6 4 4 8-8m0 0h-6m6 0v6',
   trendDown: 'M3 7l6 6 4-4 8 8m0 0h-6m6 0v-6',
   close: 'M6 6l12 12M18 6 6 18',
+  scale: 'M12 3v18m0-18 2 2-2 2-2-2 2-2Zm-9 3h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Zm0 8h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Zm12-8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Zm0 8h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z',
+  steps: 'M3 12h2m4 0h2m4 0h2m4 0h2M3 16h2m4 0h2m4 0h2m4 0h2M3 8h2m4 0h2m4 0h2m4 0h2',
+  play: 'm8 5 11 7-11 7V5Z',
+  ellipsis: 'M5 12h.01M12 12h.01M19 12h.01',
+  edit: 'M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Zm8-14 3 3',
 };
 
 export default function Icon({ name, size = 16, strokeWidth = 1.8, className = '' }) {

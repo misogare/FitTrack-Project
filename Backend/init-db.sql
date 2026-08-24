@@ -315,6 +315,7 @@ CREATE TABLE IF NOT EXISTS GOAL (
 
   goal_type VARCHAR(50) NOT NULL,
 
+  start_value DECIMAL(8,2) NOT NULL DEFAULT 0,
   target_value DECIMAL(8,2) NOT NULL,
   current_value DECIMAL(8,2) DEFAULT 0,
 

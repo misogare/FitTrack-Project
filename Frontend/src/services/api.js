@@ -73,6 +73,7 @@ deleteWorkout: (id) => request(`/workouts/${id}`, { method: 'DELETE' }),
   createGoal: (payload) => request('/goals', { method: 'POST', body: JSON.stringify(payload) }),
   updateGoalProgress: (payload) => request('/goals/progress', { method: 'POST', body: JSON.stringify(payload) }),
   goalProgress: (id) => request(`/goals/${id}/progress`),
+  updateGoal: (id, payload) => request(`/goals/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deleteGoal: (id) => request(`/goals/${id}`, { method: 'DELETE' }),
   // Body metrics (weight / BMI / body fat / measurements)
   bodyMetrics: (params = {}) => {

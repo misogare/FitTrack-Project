@@ -86,6 +86,14 @@ async function ensureSchema(connection) {
        FOREIGN KEY (user_id) REFERENCES USER(user_id) ON DELETE CASCADE
      )`
   );
+  // start_value on GOAL (baseline for range-based progress %)
+  const [gcols] = await connection.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'GOAL'`
+  );
+  if (!gcols.some(c => c.COLUMN_NAME === 'start_value')) {
+    await connection.execute('ALTER TABLE GOAL ADD COLUMN start_value DECIMAL(8,2) NOT NULL DEFAULT 0');
+  }
 }
 
 async function seedDemoUser() {
@@ -388,11 +396,21 @@ async function seedDemoUser() {
     }
 
     // ---------- GOALS ----------
+    const goalInsert = async (goal_type, start_value, target_value, current_value, start_date, target_date, status) => {
+      const [r] = await connection.execute(
+        `INSERT INTO GOAL
+          (user_id, goal_type, start_value, target_value, current_value, start_date, target_date, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, goal_type, start_value, target_value, current_value, start_date, target_date, status]
+      );
+      return r.insertId;
+    };
+
     const [weeklyGoal] = await connection.execute(
       `INSERT INTO GOAL
-        (user_id, goal_type, target_value, current_value, start_date, target_date, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'Active')`,
-      [userId, 'Weekly workouts', 5, 3, '2026-08-17', '2026-08-23']
+        (user_id, goal_type, start_value, target_value, current_value, start_date, target_date, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')`,
+      [userId, 'Weekly workouts', 0, 5, 3, '2026-08-17', '2026-08-23']
     );
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)`,
@@ -401,17 +419,37 @@ async function seedDemoUser() {
        weeklyGoal.insertId, '2026-08-17', 3]
     );
 
-    const [weightGoal] = await connection.execute(
-      `INSERT INTO GOAL
-        (user_id, goal_type, target_value, current_value, start_date, target_date, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'Active')`,
-      [userId, 'Healthy weight', 70, 74, '2026-08-01', '2026-12-01']
-    );
+    const weightGoal = await goalInsert('Healthy weight', 76, 70, 74, '2026-08-01', '2026-12-01', 'Active');
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?)`,
-      [weightGoal.insertId, '2026-08-01', 76,
-       weightGoal.insertId, '2026-08-17', 74]
+      [weightGoal, '2026-08-01', 76,
+       weightGoal, '2026-08-17', 74]
     );
+
+    const runGoal = await goalInsert('Run 5K', 0, 5, 3.2, '2026-06-01', '2026-07-15', 'Active');
+    await connection.execute(
+      `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)`,
+      [runGoal, '2026-06-05', 1.5,
+       runGoal, '2026-06-20', 2.4,
+       runGoal, '2026-07-02', 3.2]
+    );
+
+    const muscleGoal = await goalInsert('Muscle Gain', 66, 72, 68, '2026-07-01', '2026-10-01', 'Active');
+    await connection.execute(
+      `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?)`,
+      [muscleGoal, '2026-07-01', 66,
+       muscleGoal, '2026-08-17', 68]
+    );
+
+    const waterGoal = await goalInsert('Daily Water Intake', 1, 2.5, 1.8, '2026-08-01', '2026-12-31', 'Active');
+    await connection.execute(
+      `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?)`,
+      [waterGoal, '2026-08-01', 1,
+       waterGoal, '2026-08-17', 1.8]
+    );
+
+    await goalInsert('Daily Steps Goal', 4000, 10000, 10000, '2026-04-01', '2026-06-01', 'Achieved');
+    await goalInsert('Sleep Consistency', 0, 8, 0, '2026-08-01', '2026-09-30', 'Active');
 
     // ---------- OTHER PLANS (Paused + Completed) ----------
     await connection.execute(
@@ -459,7 +497,7 @@ async function seedDemoUser() {
     console.log('  • 1 Active plan with 4 sessions + 16 exercises');
     console.log('  • 1 Paused plan, 1 Completed plan');
     console.log('  • 5 workouts (3 linked to active plan, 2 standalone)');
-    console.log('  • 4 meals, 2 goals, 22-exercise library');
+    console.log('  • 4 meals, 7 goals (in-progress/completed/not-started), 22-exercise library');
     console.log(`  • ${foods.length}-item food database with barcodes`);
     console.log('  • 5 water entries + nutrition goals');
     console.log('  • 8 weekly body metrics (weight/BMI/body fat/measurements)');
