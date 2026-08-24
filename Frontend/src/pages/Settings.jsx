@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Icon from '../components/Icon';
 import { api } from '../services/api';
@@ -18,6 +19,7 @@ const initial = {
 
 export default function Settings() {
   const { user } = useAuth();
+  const location = useLocation();
   const [prefs, setPrefs] = useState(initial);
   const [exportOptions, setExportOptions] = useState({
     activity: true,
@@ -29,6 +31,14 @@ export default function Settings() {
   });
   const [message, setMessage] = useState('');
   const toggle = k => setPrefs(p => ({ ...p, [k]: !p[k] }));
+
+  // Scroll to the section named by the URL hash (e.g. #privacy-policy)
+  useEffect(() => {
+    if (location.hash) {
+      const el = document.getElementById(location.hash.slice(1));
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.hash]);
 
   return (
     <div className="app-page">
