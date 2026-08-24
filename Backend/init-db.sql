@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS WORKOUT (
   intensity VARCHAR(20) NOT NULL,
 
   calories_burned INT NULL,
+  distance_km DECIMAL(6,2) NULL,
 
   workout_date DATE NOT NULL,
 
@@ -193,6 +194,37 @@ CREATE TABLE IF NOT EXISTS PLAN_EXERCISE (
     REFERENCES EXERCISE(exercise_id)
     ON DELETE RESTRICT
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- =========================================================
+-- BODY METRICS (weight / BMI / body fat / measurements)
+-- =========================================================
+
+CREATE TABLE IF NOT EXISTS BODY_METRIC (
+  body_metric_id INT AUTO_INCREMENT PRIMARY KEY,
+
+  user_id INT NOT NULL,
+  log_date DATE NOT NULL,
+
+  weight_kg DECIMAL(5,2) NULL,
+  bmi DECIMAL(4,2) NULL,
+  body_fat_pct DECIMAL(4,2) NULL,
+
+  chest_cm DECIMAL(5,2) NULL,
+  waist_cm DECIMAL(5,2) NULL,
+  hips_cm DECIMAL(5,2) NULL,
+  arms_cm DECIMAL(5,2) NULL,
+
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_body_metric_user_date (user_id, log_date),
+
+  FOREIGN KEY (user_id)
+    REFERENCES USER(user_id)
+    ON DELETE CASCADE
+);
+
+
 -- =========================================================
 -- MEALS
 -- =========================================================

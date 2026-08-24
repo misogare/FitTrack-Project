@@ -60,6 +60,32 @@ async function ensureSchema(connection) {
        FOREIGN KEY (user_id) REFERENCES USER(user_id) ON DELETE CASCADE
      )`
   );
+  // distance_km on WORKOUT (Analytics distance KPI)
+  const [wcols] = await connection.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'WORKOUT'`
+  );
+  if (!wcols.some(c => c.COLUMN_NAME === 'distance_km')) {
+    await connection.execute('ALTER TABLE WORKOUT ADD COLUMN distance_km DECIMAL(6,2) NULL');
+  }
+  await connection.execute(
+    `CREATE TABLE IF NOT EXISTS BODY_METRIC (
+       body_metric_id INT AUTO_INCREMENT PRIMARY KEY,
+       user_id INT NOT NULL,
+       log_date DATE NOT NULL,
+       weight_kg DECIMAL(5,2) NULL,
+       bmi DECIMAL(4,2) NULL,
+       body_fat_pct DECIMAL(4,2) NULL,
+       chest_cm DECIMAL(5,2) NULL,
+       waist_cm DECIMAL(5,2) NULL,
+       hips_cm DECIMAL(5,2) NULL,
+       arms_cm DECIMAL(5,2) NULL,
+       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+       UNIQUE KEY uk_body_metric_user_date (user_id, log_date),
+       FOREIGN KEY (user_id) REFERENCES USER(user_id) ON DELETE CASCADE
+     )`
+  );
 }
 
 async function seedDemoUser() {
@@ -110,6 +136,7 @@ async function seedDemoUser() {
     await connection.execute('DELETE FROM WORKOUT WHERE user_id = ?', [userId]);
     await connection.execute('DELETE FROM MEAL WHERE user_id = ?', [userId]);
     await connection.execute('DELETE FROM WATER_LOG WHERE user_id = ?', [userId]);
+    await connection.execute('DELETE FROM BODY_METRIC WHERE user_id = ?', [userId]);
     await connection.execute('DELETE FROM WORKOUT_PLAN WHERE user_id = ?', [userId]);
 
     // ---------- EXERCISE LIBRARY ----------
@@ -246,24 +273,44 @@ async function seedDemoUser() {
       }
     }
 
-    // ---------- WORKOUTS (some linked to plan items) ----------
+    // ---------- WORKOUTS (some linked to plan items, running sessions carry distance) ----------
     const workouts = [
       // 3 of these are completed sessions of the plan
-      ['Lower Body Strength', 'Strength Training', 50, 'High',   420, '2026-08-10', 'Lower body session',  planId, planItemIds[1]],
-      ['Easy Run',            'Running',           30, 'Low',    280, '2026-08-12', 'Easy run',            planId, planItemIds[2]],
-      ['Upper Body Strength', 'Strength Training', 50, 'High',   430, '2026-08-14', 'Upper body session',  planId, planItemIds[3]],
+      ['Lower Body Strength', 'Strength Training', 50, 'High',   420, 0,    '2026-08-10', 'Lower body session',  planId, planItemIds[1]],
+      ['Easy Run',            'Running',           30, 'Low',    280, 4.2,  '2026-08-12', 'Easy run',            planId, planItemIds[2]],
+      ['Upper Body Strength', 'Strength Training', 50, 'High',   430, 0,    '2026-08-14', 'Upper body session',  planId, planItemIds[3]],
       // The other two are not part of the plan (just extras)
-      ['Morning 5K Run',      'Running',           35, 'Medium', 310, '2026-08-17', 'Morning run',         null, null],
-      ['Recovery Yoga',       'Yoga',              40, 'Low',    150, '2026-08-09', 'Recovery session',    null, null],
+      ['Morning 5K Run',      'Running',           35, 'Medium', 310, 5.0,  '2026-08-17', 'Morning run',         null, null],
+      ['Recovery Yoga',       'Yoga',              40, 'Low',    150, 0,    '2026-08-09', 'Recovery session',    null, null],
     ];
 
     for (const w of workouts) {
       await connection.execute(
         `INSERT INTO WORKOUT
           (user_id, activity_name, workout_type, duration_minutes, intensity,
-           calories_burned, workout_date, notes, plan_id, plan_item_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           calories_burned, distance_km, workout_date, notes, plan_id, plan_item_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [userId, ...w]
+      );
+    }
+
+    // ---------- BODY METRICS (8 weekly logs, weight 76.0 -> 74.0 kg) ----------
+    const bodyMetrics = [
+      ['2026-06-29', 76.0, 24.8, 19.5, 97.0, 84.0, 96.0, 33.0],
+      ['2026-07-06', 75.6, 24.7, 19.3, 96.5, 83.5, 95.5, 33.2],
+      ['2026-07-13', 75.3, 24.6, 19.1, 96.5, 83.5, 95.5, 33.4],
+      ['2026-07-20', 75.0, 24.5, 18.9, 96.0, 83.0, 95.0, 33.5],
+      ['2026-07-27', 74.7, 24.4, 18.7, 96.0, 82.5, 94.5, 33.7],
+      ['2026-08-03', 74.4, 24.3, 18.6, 95.5, 82.5, 94.5, 33.9],
+      ['2026-08-10', 74.2, 24.2, 18.5, 95.5, 82.0, 94.0, 34.0],
+      ['2026-08-17', 74.0, 24.2, 18.3, 95.0, 82.0, 94.0, 34.2],
+    ];
+    for (const m of bodyMetrics) {
+      await connection.execute(
+        `INSERT INTO BODY_METRIC
+          (user_id, log_date, weight_kg, bmi, body_fat_pct, chest_cm, waist_cm, hips_cm, arms_cm)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [userId, ...m]
       );
     }
 
@@ -415,6 +462,7 @@ async function seedDemoUser() {
     console.log('  • 4 meals, 2 goals, 22-exercise library');
     console.log(`  • ${foods.length}-item food database with barcodes`);
     console.log('  • 5 water entries + nutrition goals');
+    console.log('  • 8 weekly body metrics (weight/BMI/body fat/measurements)');
     console.log('  • Settings configured\n');
   } catch (error) {
     await connection.rollback();

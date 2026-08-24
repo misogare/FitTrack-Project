@@ -11,6 +11,7 @@ export const createWorkout = async (req, res, next) => {
   duration_minutes,
   intensity,
   calories_burned,
+  distance_km,
   workout_date,
   notes,
   plan_id,
@@ -29,10 +30,11 @@ export const createWorkout = async (req, res, next) => {
       duration_minutes,
       intensity,
       calories_burned,
+      distance_km,
       workout_date,
       notes
     )
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   [
     user_id,
     plan_id || null,
@@ -42,6 +44,7 @@ export const createWorkout = async (req, res, next) => {
     duration_minutes,
     intensity,
     calories_burned || null,
+    distance_km || null,
     workout_date,
     notes || null
   ]
@@ -64,6 +67,7 @@ export const getWorkouts = async (req, res, next) => {
       w.duration_minutes,
       w.intensity,
       w.calories_burned,
+      w.distance_km,
       DATE_FORMAT(w.workout_date, '%Y-%m-%d') AS workout_date,
       w.notes,
       w.plan_id,
@@ -111,6 +115,7 @@ export const updateWorkout = async (req, res, next) => {
       duration_minutes,
       intensity,
       calories_burned,
+      distance_km,
       workout_date,
       notes,
       plan_id,
@@ -125,6 +130,7 @@ export const updateWorkout = async (req, res, next) => {
          duration_minutes = ?,
          intensity = ?,
          calories_burned = ?,
+         distance_km = ?,
          workout_date = ?,
          notes = ?,
          plan_id = ?,
@@ -137,6 +143,7 @@ export const updateWorkout = async (req, res, next) => {
         duration_minutes,
         intensity,
         calories_burned || null,
+        distance_km || null,
         workout_date,
         notes || null,
         plan_id || null,

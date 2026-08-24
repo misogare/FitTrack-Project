@@ -9,6 +9,7 @@ import goalRoutes from './routes/goals.js';
 import planRoutes from './routes/plan.js';
 import nutritionRoutes from './routes/nutrition.js';
 import foodRoutes from './routes/foods.js';
+import bodyMetricRoutes from './routes/body-metrics.js';
 import dashboardRoutes from './routes/dashboard.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -40,6 +41,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/nutrition', nutritionRoutes);
 app.use('/api/foods', foodRoutes);
+app.use('/api/body-metrics', bodyMetricRoutes);
 // Error handling
 app.use(errorHandler);
 

@@ -35,6 +35,12 @@ const paths = {
   sparkles: 'm12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Zm6 12 .8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8L18 15Z',
   bookmark: 'M5 3h14v18l-7-4-7 4V3Z',
   barcode: 'M4 5v14M8 5v14m4-14v14m4-14v14m4-14v14',
+  trophy: 'M8 21h8m-4-4v4M6 3h12v6a6 6 0 0 1-12 0V3Z',
+  medal: 'M7 21h10M12 17v4M8 3h8l-1.5 6h-5L8 3Zm0 0 4 5 4-5M7 12a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z',
+  star: 'm12 3 2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9L6.6 20l1-6L3.2 9.4l6.1-.9L12 3Z',
+  trendUp: 'M3 17l6-6 4 4 8-8m0 0h-6m6 0v6',
+  trendDown: 'M3 7l6 6 4-4 8 8m0 0h-6m6 0v-6',
+  close: 'M6 6l12 12M18 6 6 18',
 };
 
 export default function Icon({ name, size = 16, strokeWidth = 1.8, className = '' }) {

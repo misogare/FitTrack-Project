@@ -74,6 +74,17 @@ deleteWorkout: (id) => request(`/workouts/${id}`, { method: 'DELETE' }),
   updateGoalProgress: (payload) => request('/goals/progress', { method: 'POST', body: JSON.stringify(payload) }),
   goalProgress: (id) => request(`/goals/${id}/progress`),
   deleteGoal: (id) => request(`/goals/${id}`, { method: 'DELETE' }),
+  // Body metrics (weight / BMI / body fat / measurements)
+  bodyMetrics: (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') query.append(k, v);
+    });
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    return request(`/body-metrics${suffix}`);
+  },
+  logBodyMetric: (payload) => request('/body-metrics', { method: 'POST', body: JSON.stringify(payload) }),
+  deleteBodyMetric: (id) => request(`/body-metrics/${id}`, { method: 'DELETE' }),
   plans:        () => request('/plans'),
 activePlan:   () => request('/plans/active'),
 getPlan:      (id) => request(`/plans/${id}`),

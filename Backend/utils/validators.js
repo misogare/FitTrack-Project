@@ -52,6 +52,11 @@ export const workoutValidation = [
     .isInt({ min: 0 })
     .withMessage('Calories must be a positive number'),
 
+  body('distance_km')
+    .optional({ nullable: true })
+    .isFloat({ min: 0, max: 1000 })
+    .withMessage('Distance must be a positive number in km'),
+
   body('notes')
     .optional({ nullable: true })
     .trim()
@@ -108,6 +113,17 @@ export const goalValidation = [
   body('start_date').isISO8601(),
   body('target_date').isISO8601(),
   body('status').optional().isIn(['Active', 'Achieved', 'Abandoned'])
+];
+
+export const bodyMetricValidation = [
+  body('log_date').isISO8601().withMessage('Valid date is required'),
+  body('weight_kg').optional({ nullable: true }).isFloat({ min: 20, max: 400 }).withMessage('Weight must be between 20 and 400 kg'),
+  body('bmi').optional({ nullable: true }).isFloat({ min: 5, max: 80 }).withMessage('Invalid BMI'),
+  body('body_fat_pct').optional({ nullable: true }).isFloat({ min: 1, max: 70 }).withMessage('Body fat must be between 1 and 70 %'),
+  body('chest_cm').optional({ nullable: true }).isFloat({ min: 20, max: 300 }).withMessage('Invalid chest measurement'),
+  body('waist_cm').optional({ nullable: true }).isFloat({ min: 20, max: 300 }).withMessage('Invalid waist measurement'),
+  body('hips_cm').optional({ nullable: true }).isFloat({ min: 20, max: 300 }).withMessage('Invalid hips measurement'),
+  body('arms_cm').optional({ nullable: true }).isFloat({ min: 10, max: 200 }).withMessage('Invalid arms measurement')
 ];
 
 export const goalProgressValidation = [

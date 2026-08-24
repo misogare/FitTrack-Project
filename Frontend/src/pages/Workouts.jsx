@@ -24,6 +24,7 @@ const EMPTY_FORM = {
   duration_minutes: 30,
   intensity: 'Medium',
   calories_burned: '',
+  distance_km: '',
   workout_date: new Date().toISOString().slice(0, 10),
   notes: '',
   plan_id: '',
@@ -126,6 +127,7 @@ useEffect(() => { loadSummary(); }, []);
     duration_minutes:  Number(form.duration_minutes),
     intensity:         form.intensity,
     calories_burned:   form.calories_burned === '' ? null : Number(form.calories_burned),
+    distance_km:       form.distance_km === '' ? null : Number(form.distance_km),
     workout_date:      form.workout_date,
     plan_id:           form.plan_id === '' ? null : Number(form.plan_id),
     plan_item_id:      form.plan_item_id === '' ? null : Number(form.plan_item_id),
@@ -196,6 +198,9 @@ useEffect(() => { loadSummary(); }, []);
 
       calories_burned:
         workout.calories_burned ?? '',
+
+      distance_km:
+        workout.distance_km ?? '',
 
       workout_date:
         workout.workout_date || '',
@@ -512,6 +517,31 @@ useEffect(() => { loadSummary(); }, []);
 
             </div>
 
+            {/* DISTANCE */}
+            <label className="field">
+              <span className="field-label">
+                Distance (km)
+              </span>
+
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="Optional — e.g. 5.0 for a run"
+                value={form.distance_km}
+                onChange={e =>
+                  updateField(
+                    'distance_km',
+                    e.target.value
+                  )
+                }
+              />
+
+              <small className="muted">
+                Leave blank if distance does not apply (e.g. strength training).
+              </small>
+            </label>
+
             {/* PLAN */}
             <label className="field">
               <span className="field-label">
@@ -821,6 +851,13 @@ useEffect(() => { loadSummary(); }, []);
                 <div className="activity-value">
 
                   {workout.duration_minutes} min
+
+                  {workout.distance_km ? (
+                    <span>
+                      {Number(workout.distance_km).toFixed(1)}{' '}
+                      km
+                    </span>
+                  ) : null}
 
                   <span>
                     {workout.calories_burned || 0}{' '}
