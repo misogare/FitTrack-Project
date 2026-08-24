@@ -15,9 +15,10 @@ export const getDashboard = async (req, res, next) => {
       [settings],
       [todaySummary]
     ] = await Promise.all([
-      // 1) Weekly workouts (last 7 days)
+      // 1) Weekly workouts (last 7 days) — full date so the client can align bars to weekdays
       pool.execute(
-        `SELECT DATE_FORMAT(workout_date, '%d/%m') AS day,
+        `SELECT DATE_FORMAT(workout_date, '%Y-%m-%d') AS workout_date,
+                DATE_FORMAT(workout_date, '%d/%m') AS day,
                 COALESCE(SUM(duration_minutes), 0) AS total_minutes,
                 COUNT(*) AS workout_count
          FROM WORKOUT

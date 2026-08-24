@@ -10,9 +10,29 @@ export default function Dashboard() {
 
   const [data, setData] = useState(null);
   const [waterToday, setWaterToday] = useState(0);
+  const [waterAdding, setWaterAdding] = useState(false);
   const [metricLogs, setMetricLogs] = useState([]);
   const [activePlan, setActivePlan] = useState(null);
   const [error, setError] = useState('');
+
+  const refreshWater = async () => {
+    try {
+      const water = await api.waterLog({ date: new Date().toISOString().slice(0, 10) });
+      setWaterToday((water.entries || []).reduce((a, w) => a + Number(w.amount_ml || 0), 0));
+    } catch { /* keep current */ }
+  };
+
+  const addWater = async (ml = 250) => {
+    try {
+      setWaterAdding(true);
+      await api.logWater({ log_date: new Date().toISOString().slice(0, 10), amount_ml: ml });
+      await refreshWater();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setWaterAdding(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -47,20 +67,17 @@ export default function Dashboard() {
   );
 
   const bars = useMemo(() => {
-    const labels = [
-      'Mon',
-      'Tue',
-      'Wed',
-      'Thu',
-      'Fri',
-      'Sat',
-      'Sun',
-    ];
-
-    return labels.map((label, i) => ({
+    // Align each logged day to its actual weekday (Mon=0 … Sun=6)
+    const byDay = {};
+    workouts.forEach((w) => {
+      if (!w.workout_date) return;
+      const d = new Date(`${w.workout_date}T00:00:00`);
+      if (Number.isNaN(d.getTime())) return;
+      byDay[(d.getDay() + 6) % 7] = Number(w.total_minutes) || 0;
+    });
+    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((label, i) => ({
       label,
-      value:
-        Number(workouts[i]?.total_minutes) || 0,
+      value: byDay[i] || 0,
     }));
   }, [workouts]);
 
@@ -896,12 +913,17 @@ const recentActivity = useMemo(() => {
           </div>
 
           <div className="dash-focus-water">
-            <div>
-              <span className="kpi-label">Hydration Today</span>
-              <strong>
-                {waterLitres.toFixed(1)} L{' '}
-                <small>of {hydrationGoal} L</small>
-              </strong>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span className="kpi-label">Hydration Today</span>
+                <strong>
+                  {waterLitres.toFixed(1)} L{' '}
+                  <small>of {hydrationGoal} L</small>
+                </strong>
+              </div>
+              <button className="button button-outline button-sm" onClick={() => addWater(250)} disabled={waterAdding}>
+                <Icon name="plus" size={12} /> 250 ml
+              </button>
             </div>
             <div className="progress-track" style={{ marginTop: 8 }}>
               <div className="progress-fill" style={{ width: `${hydrationProgress}%` }} />

@@ -102,6 +102,25 @@ async function ensureSchema(connection) {
   if (!gcols.some(c => c.COLUMN_NAME === 'start_value')) {
     await connection.execute('ALTER TABLE GOAL ADD COLUMN start_value DECIMAL(8,2) NOT NULL DEFAULT 0');
   }
+
+  // Profile extras: fitness level, avatar style, password-changed timestamp
+  const [ucols] = await connection.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'USER'`
+  );
+  const ucol = c => ucols.some(x => x.COLUMN_NAME === c);
+  if (!ucol('fitness_level')) await connection.execute('ALTER TABLE USER ADD COLUMN fitness_level VARCHAR(20) NULL');
+  if (!ucol('avatar_style')) await connection.execute('ALTER TABLE USER ADD COLUMN avatar_style VARCHAR(30) NULL');
+  if (!ucol('password_changed_at')) await connection.execute('ALTER TABLE USER ADD COLUMN password_changed_at DATETIME NULL');
+
+  // Granular privacy / notification prefs persisted as JSON on SETTINGS
+  const [scols] = await connection.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'SETTINGS'`
+  );
+  if (!scols.some(c => c.COLUMN_NAME === 'prefs_json')) {
+    await connection.execute('ALTER TABLE SETTINGS ADD COLUMN prefs_json JSON NULL');
+  }
 }
 
 async function seedDemoUser() {

@@ -22,6 +22,19 @@ const fmtMemberSince = s => {
 const initials = p => `${(p.first_name || 'A')[0]}${(p.last_name || 'U')[0]}`.toUpperCase();
 const fmtNum = v => { const n = Number(v); return Number.isFinite(n) && String(v) !== '' ? String(n) : v; };
 
+const AVATAR_STYLES = {
+  charcoal: { bg: '#111827', fg: '#ffffff' },
+  teal: { bg: '#0f766e', fg: '#ffffff' },
+  indigo: { bg: '#4338ca', fg: '#ffffff' },
+  rose: { bg: '#be123c', fg: '#ffffff' },
+  amber: { bg: '#b45309', fg: '#ffffff' },
+  emerald: { bg: '#047857', fg: '#ffffff' },
+  slate: { bg: '#475569', fg: '#ffffff' },
+  violet: { bg: '#7c3aed', fg: '#ffffff' },
+};
+const avatarStyle = p => AVATAR_STYLES[p.avatar_style] || AVATAR_STYLES.charcoal;
+const FITNESS_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+
 const NOTIF_DEFAULTS = {
   workout: true, goals: true, weekly: true,
   nutrition: false, badges: true, marketing: false,
@@ -55,6 +68,21 @@ export default function Profile() {
     } catch { return NOTIF_DEFAULTS; }
   });
   const [notifSaved, setNotifSaved] = useState('');
+  const [avatarOpen, setAvatarOpen] = useState(false);
+
+  // Load notification prefs persisted on the server (synced across devices)
+  useEffect(() => {
+    (async () => {
+      try {
+        const s = await api.settings();
+        const saved = s.settings?.prefs?.notifications;
+        if (saved && typeof saved === 'object') {
+          setNotifications({ ...NOTIF_DEFAULTS, ...saved });
+          try { localStorage.setItem('fittrack_notifications', JSON.stringify({ ...NOTIF_DEFAULTS, ...saved })); } catch { /* ignore */ }
+        }
+      } catch { /* server unavailable — keep local */ }
+    })();
+  }, []);
 
   const load = async () => {
     try {
@@ -90,6 +118,8 @@ export default function Profile() {
         gender: profile.gender,
         height_cm: profile.height_cm,
         weight_kg: profile.weight_kg,
+        fitness_level: profile.fitness_level,
+        avatar_style: profile.avatar_style || 'charcoal',
       });
       setEditing(false);
       setMessage('Profile updated successfully.');
@@ -128,9 +158,21 @@ export default function Profile() {
     setNotifications(next);
     try { localStorage.setItem('fittrack_notifications', JSON.stringify(next)); } catch { /* ignore */ }
   };
-  const saveNotifs = () => {
-    setNotifSaved('Notification preferences saved on this device.');
-    setTimeout(() => setNotifSaved(''), 3000);
+  const saveNotifs = async () => {
+    try {
+      await api.updateSettings({ prefs: { notifications } });
+      setNotifSaved('Notification preferences saved to your account.');
+    } catch {
+      setNotifSaved('Settings endpoint unavailable — saved on this device only.');
+    }
+    setTimeout(() => setNotifSaved(''), 3500);
+  };
+
+  const pickAvatar = style => {
+    setProfile(p => ({ ...p, avatar_style: style }));
+    setAvatarOpen(false);
+    // Persist immediately so the avatar is saved even without editing details
+    api.updateProfile({ ...profile, avatar_style: style }).catch(() => {});
   };
 
   const setField = (k, v) => setProfile(p => ({ ...p, [k]: v }));
@@ -156,9 +198,31 @@ export default function Profile() {
           {/* AVATAR CARD */}
           <section className="profile-card profile-avatar-card">
             <div className="profile-avatar-wrap">
-              <div className="profile-avatar-large">{initials(profile)}</div>
-              <span className="profile-avatar-cam" title="Avatar coming soon"><Icon name="camera" size={11} /></span>
+              <div className="profile-avatar-large" style={{ background: avatarStyle(profile).bg, color: avatarStyle(profile).fg }}>
+                {initials(profile)}
+              </div>
+              <button className="profile-avatar-cam" title="Change avatar colour" onClick={() => setAvatarOpen(o => !o)}>
+                <Icon name="camera" size={11} />
+              </button>
             </div>
+            {avatarOpen && (
+              <div className="avatar-picker">
+                <span className="small muted" style={{ display: 'block', marginBottom: 8 }}>Choose an avatar colour</span>
+                <div className="avatar-picker-grid">
+                  {Object.entries(AVATAR_STYLES).map(([key, s]) => (
+                    <button
+                      key={key}
+                      className={profile.avatar_style === key ? 'selected' : ''}
+                      style={{ background: s.bg, color: s.fg }}
+                      onClick={() => pickAvatar(key)}
+                      title={key}
+                    >
+                      {initials(profile)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="profile-name">{profile.first_name || '—'} {profile.last_name || ''}</div>
             <div className="profile-email">{profile.email || '—'}</div>
             <span className="profile-member-badge"><Icon name="check" size={10} /> Active Member</span>
@@ -243,7 +307,17 @@ export default function Profile() {
               ))}
               <div className="detail-field detail-full">
                 <label>Fitness Level</label>
-                <div className="detail-value">Intermediate</div>
+                {editing ? (
+                  <select
+                    className="detail-value"
+                    value={FITNESS_LEVELS.includes(profile.fitness_level) ? profile.fitness_level : 'Intermediate'}
+                    onChange={e => setField('fitness_level', e.target.value)}
+                  >
+                    {FITNESS_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                ) : (
+                  <div className="detail-value">{profile.fitness_level || 'Intermediate'}</div>
+                )}
               </div>
             </div>
           </section>

@@ -58,6 +58,43 @@
   border: 2px solid #fff;
   display: grid;
   place-items: center;
+  cursor: pointer;
+}
+
+.profile-avatar-cam:hover { background: #404040; }
+
+.avatar-picker {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  background: #fafafa;
+  border: 1px solid #f0f1f3;
+  border-radius: 10px;
+}
+
+.avatar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.avatar-picker-grid button {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  outline: 1px solid #e5e5e5;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.avatar-picker-grid button.selected {
+  outline: 2px solid #171717;
+  outline-offset: 2px;
 }
 
 .profile-name { font-size: 16px; color: #171717; font-weight: 600; letter-spacing: -0.01em; }

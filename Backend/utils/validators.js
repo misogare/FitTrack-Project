@@ -153,3 +153,18 @@ export const goalProgressValidation = [
   body('log_date').isISO8601(),
   body('value').isFloat()
 ];
+
+export const updateSettingsValidation = [
+  body('daily_step_goal').optional({ nullable: true }).isInt({ min: 0, max: 100000 }).withMessage('Step goal must be between 0-100000'),
+  body('daily_workout_minutes').optional({ nullable: true }).isInt({ min: 0, max: 1440 }).withMessage('Workout minutes goal must be a positive number'),
+  body('daily_calorie_burn_goal').optional({ nullable: true }).isInt({ min: 0, max: 20000 }).withMessage('Calorie burn goal must be a positive number'),
+  body('daily_hydration_litres').optional({ nullable: true }).isFloat({ min: 0, max: 20 }).withMessage('Hydration goal must be a positive number'),
+  body('research_data_sharing').optional().isBoolean(),
+  body('email_reminders').optional().isBoolean(),
+  body('public_profile_visibility').optional().isBoolean(),
+  body('prefs').optional().isObject()
+];
+
+export const deleteAccountValidation = [
+  body('confirm').equals('DELETE').withMessage('Confirmation is required to delete your account')
+];

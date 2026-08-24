@@ -122,7 +122,10 @@ export const changePassword = async (req, res, next) => {
     }
 
     const password_hash = await bcrypt.hash(new_password, BCRYPT_SALT_ROUNDS);
-    await pool.execute('UPDATE USER SET password_hash = ? WHERE user_id = ?', [password_hash, user_id]);
+    await pool.execute(
+      'UPDATE USER SET password_hash = ?, password_changed_at = NOW() WHERE user_id = ?',
+      [password_hash, user_id]
+    );
 
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
@@ -139,7 +142,8 @@ export const getProfile = async (req, res, next) => {
   try {
     const user_id = req.user.user_id;
     const [rows] = await pool.execute(
-      `SELECT user_id, first_name, last_name, email, date_of_birth, gender, height_cm, weight_kg, created_at 
+      `SELECT user_id, first_name, last_name, email, date_of_birth, gender, height_cm, weight_kg,
+              fitness_level, avatar_style, password_changed_at, created_at
        FROM USER WHERE user_id = ?`,
       [user_id]
     );
@@ -168,15 +172,78 @@ export const getProfile = async (req, res, next) => {
 
 export const updateProfile = async (req, res, next) => {
   try {
-    const { first_name, last_name, date_of_birth, gender, height_cm, weight_kg } = req.body;
+    const allowed = {
+      first_name: (v) => v,
+      last_name: (v) => v,
+      date_of_birth: (v) => v || null,
+      gender: (v) => v || null,
+      height_cm: (v) => (v === '' || v == null ? null : v),
+      weight_kg: (v) => (v === '' || v == null ? null : v),
+      fitness_level: (v) => v || null,
+      avatar_style: (v) => v || null,
+    };
 
-    await pool.execute(
-      `UPDATE USER SET first_name = ?, last_name = ?, date_of_birth = ?, gender = ?, height_cm = ?, weight_kg = ?
-       WHERE user_id = ?`,
-      [first_name, last_name, date_of_birth || null, gender || null, height_cm || null, weight_kg ?? null, req.user.user_id]
-    );
+    const updates = [];
+    const params = [];
+    for (const [field, clean] of Object.entries(allowed)) {
+      if (req.body[field] !== undefined) {
+        updates.push(`${field} = ?`);
+        params.push(clean(req.body[field]));
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: 'No profile fields provided' });
+    }
+
+    params.push(req.user.user_id);
+    await pool.execute(`UPDATE USER SET ${updates.join(', ')} WHERE user_id = ?`, params);
 
     res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteAccount = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const user_id = req.user.user_id;
+    // Children tables FK ON DELETE CASCADE.
+    await pool.execute('DELETE FROM USER WHERE user_id = ?', [user_id]);
+    res.clearCookie('fittrack_token', { path: '/' });
+    res.json({ message: 'Account and all associated data were deleted.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteAllData = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+    const user_id = req.user.user_id;
+
+    // Workout plans cascade their items / plan exercises.
+    await pool.execute('DELETE FROM WORKOUT_PLAN WHERE user_id = ?', [user_id]);
+    await pool.execute('DELETE FROM WORKOUT WHERE user_id = ?', [user_id]);
+    await pool.execute('DELETE FROM GOAL_PROGRESS WHERE goal_id IN (SELECT goal_id FROM GOAL WHERE user_id = ?)', [user_id]);
+    await pool.execute('DELETE FROM GOAL WHERE user_id = ?', [user_id]);
+    await pool.execute('DELETE FROM MEAL WHERE user_id = ?', [user_id]);
+    await pool.execute('DELETE FROM WATER_LOG WHERE user_id = ?', [user_id]);
+    await pool.execute('DELETE FROM BODY_METRIC WHERE user_id = ?', [user_id]);
+    // Foods created by this user (not the shared library).
+    await pool.execute('DELETE FROM FOOD WHERE user_id = ?', [user_id]);
+    // Reset profile health fields so the account stays usable.
+    await pool.execute(
+      `UPDATE USER SET weight_kg = NULL, fitness_level = NULL WHERE user_id = ?`,
+      [user_id]
+    );
+
+    res.json({ message: 'All workout, nutrition, goal and progress data was deleted. Your account remains active.' });
   } catch (err) {
     next(err);
   }
