@@ -25,6 +25,7 @@ export const api = {
   logout: () => request('/auth/logout', { method: 'POST' }),
   getProfile: () => request('/auth/profile'),
   updateProfile: (payload) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(payload) }),
+  changePassword: (payload) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(payload) }),
   dashboard: () => request('/dashboard'),
   workouts: (params = {}) => {
   const query = new URLSearchParams();

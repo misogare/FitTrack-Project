@@ -12,7 +12,15 @@ const DEMO = {
   date_of_birth: '1998-05-12',
   gender: 'Other',
   height_cm: 175,
+  weight_kg: 74,
 };
+
+// Demo data is seeded relative to "today" so the dashboard always looks live.
+const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const today = new Date();
+const daysAgo = n => { const d = new Date(today); d.setDate(d.getDate() - n); return iso(d); };
+const weeksAgo = n => { const d = new Date(today); d.setDate(d.getDate() - n * 7); return iso(d); };
+const daysAhead = n => { const d = new Date(today); d.setDate(d.getDate() + n); return iso(d); };
 
 // Migrations for databases created before nutrition goals / water tracking /
 // the food database existed. MySQL DDL auto-commits, so run before the explicit transaction.
@@ -119,18 +127,18 @@ async function seedDemoUser() {
       userId = existing[0].user_id;
       await connection.execute(
         `UPDATE USER
-         SET first_name = ?, last_name = ?, password_hash = ?, date_of_birth = ?, gender = ?, height_cm = ?
+         SET first_name = ?, last_name = ?, password_hash = ?, date_of_birth = ?, gender = ?, height_cm = ?, weight_kg = ?
          WHERE user_id = ?`,
         [DEMO.first_name, DEMO.last_name, passwordHash, DEMO.date_of_birth,
-         DEMO.gender, DEMO.height_cm, userId]
+         DEMO.gender, DEMO.height_cm, DEMO.weight_kg, userId]
       );
     } else {
       const [result] = await connection.execute(
         `INSERT INTO USER
-          (first_name, last_name, email, password_hash, date_of_birth, gender, height_cm)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          (first_name, last_name, email, password_hash, date_of_birth, gender, height_cm, weight_kg)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [DEMO.first_name, DEMO.last_name, DEMO.email, passwordHash,
-         DEMO.date_of_birth, DEMO.gender, DEMO.height_cm]
+         DEMO.date_of_birth, DEMO.gender, DEMO.height_cm, DEMO.weight_kg]
       );
       userId = result.insertId;
     }
@@ -283,13 +291,13 @@ async function seedDemoUser() {
 
     // ---------- WORKOUTS (some linked to plan items, running sessions carry distance) ----------
     const workouts = [
-      // 3 of these are completed sessions of the plan
-      ['Lower Body Strength', 'Strength Training', 50, 'High',   420, 0,    '2026-08-10', 'Lower body session',  planId, planItemIds[1]],
-      ['Easy Run',            'Running',           30, 'Low',    280, 4.2,  '2026-08-12', 'Easy run',            planId, planItemIds[2]],
-      ['Upper Body Strength', 'Strength Training', 50, 'High',   430, 0,    '2026-08-14', 'Upper body session',  planId, planItemIds[3]],
+      // 3 of these are completed sessions of the plan (spread across the last week)
+      ['Lower Body Strength', 'Strength Training', 50, 'High',   420, 0,    daysAgo(5), 'Lower body session',  planId, planItemIds[1]],
+      ['Easy Run',            'Running',           30, 'Low',    280, 4.2,  daysAgo(4), 'Easy run',            planId, planItemIds[2]],
+      ['Upper Body Strength', 'Strength Training', 50, 'High',   430, 0,    daysAgo(2), 'Upper body session',  planId, planItemIds[3]],
       // The other two are not part of the plan (just extras)
-      ['Morning 5K Run',      'Running',           35, 'Medium', 310, 5.0,  '2026-08-17', 'Morning run',         null, null],
-      ['Recovery Yoga',       'Yoga',              40, 'Low',    150, 0,    '2026-08-09', 'Recovery session',    null, null],
+      ['Morning 5K Run',      'Running',           35, 'Medium', 310, 5.0,  daysAgo(0), 'Morning run',         null, null],
+      ['Recovery Yoga',       'Yoga',              40, 'Low',    150, 0,    daysAgo(6), 'Recovery session',    null, null],
     ];
 
     for (const w of workouts) {
@@ -304,14 +312,14 @@ async function seedDemoUser() {
 
     // ---------- BODY METRICS (8 weekly logs, weight 76.0 -> 74.0 kg) ----------
     const bodyMetrics = [
-      ['2026-06-29', 76.0, 24.8, 19.5, 97.0, 84.0, 96.0, 33.0],
-      ['2026-07-06', 75.6, 24.7, 19.3, 96.5, 83.5, 95.5, 33.2],
-      ['2026-07-13', 75.3, 24.6, 19.1, 96.5, 83.5, 95.5, 33.4],
-      ['2026-07-20', 75.0, 24.5, 18.9, 96.0, 83.0, 95.0, 33.5],
-      ['2026-07-27', 74.7, 24.4, 18.7, 96.0, 82.5, 94.5, 33.7],
-      ['2026-08-03', 74.4, 24.3, 18.6, 95.5, 82.5, 94.5, 33.9],
-      ['2026-08-10', 74.2, 24.2, 18.5, 95.5, 82.0, 94.0, 34.0],
-      ['2026-08-17', 74.0, 24.2, 18.3, 95.0, 82.0, 94.0, 34.2],
+      [weeksAgo(7), 76.0, 24.8, 19.5, 97.0, 84.0, 96.0, 33.0],
+      [weeksAgo(6), 75.6, 24.7, 19.3, 96.5, 83.5, 95.5, 33.2],
+      [weeksAgo(5), 75.3, 24.6, 19.1, 96.5, 83.5, 95.5, 33.4],
+      [weeksAgo(4), 75.0, 24.5, 18.9, 96.0, 83.0, 95.0, 33.5],
+      [weeksAgo(3), 74.7, 24.4, 18.7, 96.0, 82.5, 94.5, 33.7],
+      [weeksAgo(2), 74.4, 24.3, 18.6, 95.5, 82.5, 94.5, 33.9],
+      [weeksAgo(1), 74.2, 24.2, 18.5, 95.5, 82.0, 94.0, 34.0],
+      [weeksAgo(0), 74.0, 24.2, 18.3, 95.0, 82.0, 94.0, 34.2],
     ];
     for (const m of bodyMetrics) {
       await connection.execute(
@@ -324,10 +332,10 @@ async function seedDemoUser() {
 
     // ---------- MEALS ----------
     const meals = [
-      ['Breakfast', 'Greek yoghurt & berries', 380, 24, 42, 10, '2026-08-17'],
-      ['Lunch',     'Chicken grain bowl',      620, 46, 68, 18, '2026-08-17'],
-      ['Snack',     'Banana & almonds',        250,  7, 30, 12, '2026-08-17'],
-      ['Dinner',    'Salmon with vegetables',  540, 42, 34, 24, '2026-08-17'],
+      ['Breakfast', 'Greek yoghurt & berries', 380, 24, 42, 10, daysAgo(0)],
+      ['Lunch',     'Chicken grain bowl',      620, 46, 68, 18, daysAgo(0)],
+      ['Snack',     'Banana & almonds',        250,  7, 30, 12, daysAgo(0)],
+      ['Dinner',    'Salmon with vegetables',  540, 42, 34, 24, daysAgo(0)],
     ];
     for (const meal of meals) {
       await connection.execute(
@@ -381,11 +389,11 @@ async function seedDemoUser() {
 
     // ---------- WATER LOG ----------
     const waterEntries = [
-      ['2026-08-17', 250, '2026-08-17 08:00:00'],
-      ['2026-08-17', 500, '2026-08-17 10:30:00'],
-      ['2026-08-17', 300, '2026-08-17 12:00:00'],
-      ['2026-08-17', 500, '2026-08-17 14:15:00'],
-      ['2026-08-17', 250, '2026-08-17 17:00:00'],
+      [daysAgo(0), 250, `${daysAgo(0)} 08:00:00`],
+      [daysAgo(0), 500, `${daysAgo(0)} 10:30:00`],
+      [daysAgo(0), 300, `${daysAgo(0)} 12:00:00`],
+      [daysAgo(0), 500, `${daysAgo(0)} 14:15:00`],
+      [daysAgo(0), 250, `${daysAgo(0)} 17:00:00`],
     ];
     for (const w of waterEntries) {
       await connection.execute(
@@ -410,46 +418,46 @@ async function seedDemoUser() {
       `INSERT INTO GOAL
         (user_id, goal_type, start_value, target_value, current_value, start_date, target_date, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')`,
-      [userId, 'Weekly workouts', 0, 5, 3, '2026-08-17', '2026-08-23']
+      [userId, 'Weekly workouts', 0, 5, 3, daysAgo(6), daysAhead(1)]
     );
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)`,
-      [weeklyGoal.insertId, '2026-08-13', 1,
-       weeklyGoal.insertId, '2026-08-15', 2,
-       weeklyGoal.insertId, '2026-08-17', 3]
+      [weeklyGoal.insertId, daysAgo(6), 1,
+       weeklyGoal.insertId, daysAgo(4), 2,
+       weeklyGoal.insertId, daysAgo(0), 3]
     );
 
-    const weightGoal = await goalInsert('Healthy weight', 76, 70, 74, '2026-08-01', '2026-12-01', 'Active');
+    const weightGoal = await goalInsert('Healthy weight', 76, 70, 74, weeksAgo(3), daysAhead(120), 'Active');
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?)`,
-      [weightGoal, '2026-08-01', 76,
-       weightGoal, '2026-08-17', 74]
+      [weightGoal, weeksAgo(3), 76,
+       weightGoal, daysAgo(0), 74]
     );
 
-    const runGoal = await goalInsert('Run 5K', 0, 5, 3.2, '2026-06-01', '2026-07-15', 'Active');
+    const runGoal = await goalInsert('Run 5K', 0, 5, 3.2, weeksAgo(8), daysAhead(10), 'Active');
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)`,
-      [runGoal, '2026-06-05', 1.5,
-       runGoal, '2026-06-20', 2.4,
-       runGoal, '2026-07-02', 3.2]
+      [runGoal, weeksAgo(8), 1.5,
+       runGoal, weeksAgo(5), 2.4,
+       runGoal, weeksAgo(2), 3.2]
     );
 
-    const muscleGoal = await goalInsert('Muscle Gain', 66, 72, 68, '2026-07-01', '2026-10-01', 'Active');
+    const muscleGoal = await goalInsert('Muscle Gain', 66, 72, 68, weeksAgo(6), daysAhead(60), 'Active');
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?)`,
-      [muscleGoal, '2026-07-01', 66,
-       muscleGoal, '2026-08-17', 68]
+      [muscleGoal, weeksAgo(6), 66,
+       muscleGoal, daysAgo(0), 68]
     );
 
-    const waterGoal = await goalInsert('Daily Water Intake', 1, 2.5, 1.8, '2026-08-01', '2026-12-31', 'Active');
+    const waterGoal = await goalInsert('Daily Water Intake', 1, 2.5, 1.8, weeksAgo(3), daysAhead(120), 'Active');
     await connection.execute(
       `INSERT INTO GOAL_PROGRESS (goal_id, log_date, value) VALUES (?, ?, ?), (?, ?, ?)`,
-      [waterGoal, '2026-08-01', 1,
-       waterGoal, '2026-08-17', 1.8]
+      [waterGoal, weeksAgo(3), 1,
+       waterGoal, daysAgo(0), 1.8]
     );
 
-    await goalInsert('Daily Steps Goal', 4000, 10000, 10000, '2026-04-01', '2026-06-01', 'Achieved');
-    await goalInsert('Sleep Consistency', 0, 8, 0, '2026-08-01', '2026-09-30', 'Active');
+    await goalInsert('Daily Steps Goal', 4000, 10000, 10000, weeksAgo(16), weeksAgo(12), 'Achieved');
+    await goalInsert('Sleep Consistency', 0, 8, 0, weeksAgo(3), daysAhead(30), 'Active');
 
     // ---------- OTHER PLANS (Paused + Completed) ----------
     await connection.execute(

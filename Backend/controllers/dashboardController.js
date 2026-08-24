@@ -53,7 +53,8 @@ export const getDashboard = async (req, res, next) => {
       pool.execute(
         `SELECT COUNT(*)                              AS workouts_this_month,
                 COALESCE(SUM(calories_burned), 0)     AS total_calories_burned,
-                COALESCE(SUM(duration_minutes), 0)    AS total_minutes_this_month
+                COALESCE(SUM(duration_minutes), 0)    AS total_minutes_this_month,
+                COALESCE(SUM(distance_km), 0)         AS total_distance_km
          FROM WORKOUT
          WHERE user_id = ?
            AND MONTH(workout_date) = MONTH(CURDATE())
@@ -129,6 +130,7 @@ export const getDashboard = async (req, res, next) => {
         workouts_this_month: 0,
         total_calories_burned: 0,
         total_minutes_this_month: 0,
+        total_distance_km: 0,
       },
       recent_workouts: recentWorkouts,
       recent_meals: recentMeals,

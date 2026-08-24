@@ -21,6 +21,17 @@ export const loginValidation = [
   body('password').notEmpty()
 ];
 
+export const changePasswordValidation = [
+  body('current_password').notEmpty().withMessage('Current password is required'),
+  body('new_password')
+    .isLength({ min: 8 })
+    .withMessage('New password must be at least 8 characters')
+    .matches(/[a-zA-Z]/)
+    .withMessage('New password must contain at least one letter')
+    .matches(/[0-9]/)
+    .withMessage('New password must contain at least one number')
+];
+
 
 export const workoutValidation = [
   body('activity_name')

@@ -46,6 +46,7 @@ const paths = {
   play: 'm8 5 11 7-11 7V5Z',
   ellipsis: 'M5 12h.01M12 12h.01M19 12h.01',
   edit: 'M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Zm8-14 3 3',
+  camera: 'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Zm8 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
 };
 
 export default function Icon({ name, size = 16, strokeWidth = 1.8, className = '' }) {

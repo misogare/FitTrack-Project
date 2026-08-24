@@ -9,15 +9,29 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const [data, setData] = useState(null);
+  const [waterToday, setWaterToday] = useState(0);
+  const [metricLogs, setMetricLogs] = useState([]);
+  const [activePlan, setActivePlan] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.dashboard()
-      .then(setData)
-      .catch((e) => {
+    (async () => {
+      try {
+        const [dash, water, metrics, plan] = await Promise.all([
+          api.dashboard(),
+          api.waterLog({ date: new Date().toISOString().slice(0, 10) }).catch(() => ({ entries: [] })),
+          api.bodyMetrics({ limit: 60 }).catch(() => ({ metrics: [] })),
+          api.activePlan().catch(() => ({ active: null })),
+        ]);
+        setData(dash);
+        setWaterToday((water.entries || []).reduce((a, w) => a + Number(w.amount_ml || 0), 0));
+        setMetricLogs(metrics.metrics || []);
+        setActivePlan(plan.active || null);
+      } catch (e) {
         console.error(e);
         setError(e.message);
-      });
+      }
+    })();
   }, []);
 
   const workouts = data?.weekly_workouts || [];
@@ -95,29 +109,10 @@ const recentActivity = useMemo(() => {
     .sort((a, b) => (a._sortKey < b._sortKey ? 1 : -1))
     .slice(0, 6);
 }, [recent_workouts, recent_meals]);
-  const upcomingWorkouts = [
-    {
-      id: 1,
-      day: 'Today',
-      title: 'Upper Body Strength',
-      time: '6:00 PM',
-      duration: '45 min',
-    },
-    {
-      id: 2,
-      day: 'Tomorrow',
-      title: 'Cardio & Conditioning',
-      time: '7:30 AM',
-      duration: '30 min',
-    },
-    {
-      id: 3,
-      day: 'Friday',
-      title: 'Full Body Workout',
-      time: '5:30 PM',
-      duration: '50 min',
-    },
-  ];
+  const distanceKm = Number(monthly.total_distance_km || 0);
+  const waterLitres = waterToday / 1000;
+  const hydrationGoal = Number(settings.daily_hydration_litres || 2.5);
+  const hydrationProgress = Math.min(100, (waterLitres / hydrationGoal) * 100);
 
   const workoutCount = workouts.reduce(
     (sum, x) =>
@@ -135,6 +130,36 @@ const recentActivity = useMemo(() => {
     (Number(nutrition.total_calories || 0) / 2200) *
       100
   );
+
+  // Average duration this month (real)
+  const avgDuration = Number(monthly.workouts_this_month)
+    ? Math.round(Number(monthly.total_minutes_this_month || 0) / Number(monthly.workouts_this_month))
+    : 0;
+
+  // Upcoming sessions from the active plan
+  const planItems = activePlan?.items || [];
+  const planCompleted = planItems.filter(i => Number(i.is_completed)).length;
+  const upcomingWorkouts = planItems.map((item) => ({
+    id: `p-${item.plan_item_id}`,
+    day: `Day ${item.day_number}`,
+    title: item.activity_name,
+    time: item.target_intensity ? `${item.target_intensity} · ${item.target_duration_minutes || 0} min` : '',
+    completed: Boolean(Number(item.is_completed)),
+  }));
+
+  // Body metrics (latest + 8-week trend)
+  const metricSeries = [...metricLogs].sort((a, b) => (a.log_date < b.log_date ? -1 : 1));
+  const lastMetric = metricSeries.length ? metricSeries[metricSeries.length - 1] : null;
+  const firstMetric = metricSeries.length ? metricSeries[0] : null;
+  const weightDelta = lastMetric && firstMetric
+    ? Math.round((Number(lastMetric.weight_kg || 0) - Number(firstMetric.weight_kg || 0)) * 10) / 10
+    : null;
+  const fatDelta = lastMetric && firstMetric && lastMetric.body_fat_pct != null && firstMetric.body_fat_pct != null
+    ? Math.round((Number(lastMetric.body_fat_pct) - Number(firstMetric.body_fat_pct)) * 10) / 10
+    : null;
+  const weightVals = metricSeries.map(m => Number(m.weight_kg)).filter(v => v > 0);
+  const weightMin = weightVals.length ? Math.min(...weightVals) : 0;
+  const weightRange = weightVals.length ? Math.max(...weightVals) - weightMin || 1 : 1;
 
   return (
     <div className="dashboard-page">
@@ -210,23 +235,30 @@ const recentActivity = useMemo(() => {
             monthly.total_calories_burned || 0
           ).toLocaleString()}
           suffix="kcal burned this month"
-          progress={64}
+          progress={Math.min(
+            100,
+            (Number(monthly.total_calories_burned || 0) /
+              (Number(monthly.workouts_this_month || 0) *
+                Number(settings.daily_calorie_burn_goal || 500) ||
+                1)) *
+              100
+          )}
         />
 
         <Metric
           icon="activity"
-          title="Steps"
-          value="7,342"
-          suffix="of 10,000 steps today"
-          progress={73}
+          title="Distance"
+          value={distanceKm ? distanceKm.toFixed(1) : '0'}
+          suffix="km covered this month"
+          progress={Math.min(100, (distanceKm / 50) * 100)}
         />
 
         <Metric
           icon="water"
           title="Hydration"
-          value="1.8 L"
-          suffix="of 2.5 L daily target"
-          progress={72}
+          value={`${waterLitres.toFixed(1)} L`}
+          suffix={`of ${hydrationGoal} L daily target`}
+          progress={hydrationProgress}
         />
 
       </div>
@@ -296,7 +328,7 @@ const recentActivity = useMemo(() => {
               </div>
 
               <div className="kpi-value">
-                48 min
+                {avgDuration} min
               </div>
             </div>
 
@@ -659,7 +691,9 @@ const recentActivity = useMemo(() => {
               </h2>
 
               <p className="section-description">
-                Stay on top of your training plan
+                {activePlan
+                  ? `${activePlan.plan_name} · ${planCompleted} of ${planItems.length} sessions done`
+                  : 'Sessions from your active plan'}
               </p>
             </div>
 
@@ -672,46 +706,222 @@ const recentActivity = useMemo(() => {
 
           </div>
 
-          <div className="dashboard-list">
+          {upcomingWorkouts.length ? (
+            <div className="dashboard-list">
 
-            {upcomingWorkouts.map((workout) => (
-              <div
-                className="dashboard-list-item"
-                key={workout.id}
-              >
-
-                <div className="workout-day">
-                  <span>
-                    {workout.day}
-                  </span>
-
-                  <strong>
-                    {workout.time}
-                  </strong>
-                </div>
-
-                <div className="dashboard-list-content">
-
-                  <strong>
-                    {workout.title}
-                  </strong>
-
-                  <span>
-                    {workout.duration}
-                  </span>
-
-                </div>
-
-                <Link
-                  to="/plans"
-                  className="dashboard-start-button"
+              {upcomingWorkouts.map((workout) => (
+                <div
+                  className={`dashboard-list-item ${workout.completed ? 'done' : ''}`}
+                  key={workout.id}
                 >
-                  Start
-                </Link>
 
+                  <div className="workout-day">
+                    <span>
+                      {workout.day}
+                    </span>
+
+                    {workout.completed ? (
+                      <strong className="workout-complete">
+                        <Icon name="check" size={12} /> Done
+                      </strong>
+                    ) : (
+                      <strong>
+                        {workout.time}
+                      </strong>
+                    )}
+                  </div>
+
+                  <div className="dashboard-list-content">
+
+                    <strong>
+                      {workout.title}
+                    </strong>
+
+                    <span>
+                      {workout.completed
+                        ? 'Completed'
+                        : 'Next session · ' +
+                          (workout.time || 'upcoming')}
+                    </span>
+
+                  </div>
+
+                  <Link
+                    to="/plans"
+                    className="dashboard-start-button"
+                  >
+                    {workout.completed ? 'View' : 'Start'}
+                  </Link>
+
+                </div>
+              ))}
+
+            </div>
+          ) : (
+            <div className="empty">
+              No active plan.{' '}
+              <Link className="auth-link" to="/plans">
+                Create a plan to see upcoming sessions.
+              </Link>
+            </div>
+          )}
+
+        </section>
+
+      </div>
+
+
+      {/* BODY METRICS + TODAY'S FOCUS */}
+      <div
+        className="grid-2"
+        style={{ marginTop: 16 }}
+      >
+
+        {/* BODY METRICS */}
+        <section className="card card-pad">
+
+          <div className="section-head">
+
+            <div>
+              <h2 className="section-title">
+                Body Metrics
+              </h2>
+
+              <p className="section-description">
+                Latest weight, BMI and body fat trends
+              </p>
+            </div>
+
+            <Link
+              to="/analytics"
+              className="auth-link small"
+            >
+              View analytics →
+            </Link>
+
+          </div>
+
+          {lastMetric ? (
+            <>
+              <div className="dash-metric-row">
+                <div className="dash-metric">
+                  <span>Weight</span>
+                  <strong>{Number(lastMetric.weight_kg || 0).toFixed(1)} kg</strong>
+                  <small className={weightDelta != null && weightDelta < 0 ? 'good' : ''}>
+                    {weightDelta != null ? `${weightDelta > 0 ? '+' : ''}${weightDelta.toFixed(1)} kg` : '—'}
+                  </small>
+                </div>
+                <div className="dash-metric">
+                  <span>BMI</span>
+                  <strong>{lastMetric.bmi != null ? Number(lastMetric.bmi).toFixed(1) : '—'}</strong>
+                  <small>{lastMetric.bmi != null ? 'Healthy 18.5–24.9' : '—'}</small>
+                </div>
+                <div className="dash-metric">
+                  <span>Body Fat</span>
+                  <strong>{lastMetric.body_fat_pct != null ? `${Number(lastMetric.body_fat_pct).toFixed(1)}%` : '—'}</strong>
+                  <small className={fatDelta != null && fatDelta < 0 ? 'good' : ''}>
+                    {fatDelta != null ? `${fatDelta > 0 ? '+' : ''}${fatDelta.toFixed(1)}%` : '—'}
+                  </small>
+                </div>
               </div>
-            ))}
 
+              <div className="dash-weight-chart">
+                {metricSeries.map((m, i) => {
+                  const w = Number(m.weight_kg);
+                  if (!w) return null;
+                  const h = 20 + ((w - weightMin) / weightRange) * 80;
+                  return (
+                    <div className="dash-weight-bar" key={i} title={`${m.log_date}: ${w} kg`}>
+                      <div style={{ height: `${h}%` }} />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="small muted" style={{ marginTop: 6 }}>
+                Weight trend — last {metricSeries.filter(m => Number(m.weight_kg)).length} logged {metricSeries.length === 1 ? 'entry' : 'entries'}
+              </div>
+            </>
+          ) : (
+            <div className="empty">
+              No body metrics logged yet.{' '}
+              <Link className="auth-link" to="/analytics">
+                Log a measurement.
+              </Link>
+            </div>
+          )}
+
+        </section>
+
+
+        {/* TODAY'S FOCUS */}
+        <section className="card card-pad">
+
+          <div className="section-head">
+
+            <div>
+              <h2 className="section-title">
+                Today's Focus
+              </h2>
+
+              <p className="section-description">
+                Your activity and hydration so far
+              </p>
+            </div>
+
+            <Link
+              to="/workouts"
+              className="auth-link small"
+            >
+              Log activity →
+            </Link>
+
+          </div>
+
+          <div className="dash-metric-row">
+            <div className="dash-metric">
+              <span>Workouts</span>
+              <strong>{Number(today_summary.sessions_today || 0)}</strong>
+              <small>session{today_summary.sessions_today === 1 ? '' : 's'} today</small>
+            </div>
+            <div className="dash-metric">
+              <span>Active Minutes</span>
+              <strong>{Number(today_summary.minutes_today || 0)}</strong>
+              <small>of {Number(settings.daily_workout_minutes || 60)} min goal</small>
+            </div>
+            <div className="dash-metric">
+              <span>Calories Burned</span>
+              <strong>{Number(today_summary.calories_today || 0)}</strong>
+              <small>of {Number(settings.daily_calorie_burn_goal || 500)} kcal goal</small>
+            </div>
+          </div>
+
+          <div className="dash-focus-water">
+            <div>
+              <span className="kpi-label">Hydration Today</span>
+              <strong>
+                {waterLitres.toFixed(1)} L{' '}
+                <small>of {hydrationGoal} L</small>
+              </strong>
+            </div>
+            <div className="progress-track" style={{ marginTop: 8 }}>
+              <div className="progress-fill" style={{ width: `${hydrationProgress}%` }} />
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderTop: '1px solid #f0f1f3',
+              marginTop: 16,
+              paddingTop: 16,
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div className="kpi-label">Active Days This Month</div>
+            <div className="kpi-value" style={{ fontSize: 18 }}>
+              {Number(monthly.workouts_this_month || 0)}{' '}
+              <span className="small muted">workouts</span>
+            </div>
           </div>
 
         </section>

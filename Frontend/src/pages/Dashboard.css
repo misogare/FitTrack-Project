@@ -141,6 +141,96 @@
 }
 
 
+/* Completed plan sessions */
+
+.dashboard-list-item.done .dashboard-list-content strong,
+.dashboard-list-item.done .workout-day span {
+  color: #a3a3a3;
+}
+
+.workout-complete {
+  color: #059669 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Body metrics + today's focus widgets */
+
+.dash-metric-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dash-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #fafafa;
+  border: 1px solid #f0f1f3;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.dash-metric span { font-size: 11px; color: #a3a3a3; }
+.dash-metric strong { font-size: 18px; color: #171717; font-weight: 600; line-height: 1.2; }
+.dash-metric small { font-size: 11px; color: #a3a3a3; }
+.dash-metric small.good { color: #059669; }
+
+.dash-weight-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 90px;
+  margin-top: 16px;
+  background: #fafafa;
+  border: 1px solid #f0f1f3;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.dash-weight-bar {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.dash-weight-bar > div {
+  width: 100%;
+  background: #171717;
+  border-radius: 3px 3px 0 0;
+  min-height: 3px;
+}
+
+.dash-focus-water {
+  margin-top: 16px;
+  background: #fafafa;
+  border: 1px solid #f0f1f3;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.dash-focus-water strong {
+  font-size: 16px;
+  color: #171717;
+  font-weight: 600;
+}
+
+.dash-focus-water strong small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+@media (max-width: 640px) {
+  .dash-metric-row { grid-template-columns: 1fr; }
+}
+
+
 /* Mobile */
 
 @media (max-width: 768px) {

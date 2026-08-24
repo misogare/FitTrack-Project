@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Icon from '../components/Icon';
+import dashboardPreview from '../assets/dashboard-preview.png';
 
 import {
   Zap, Rocket, Play, Check, BarChart3, Activity,
@@ -56,10 +57,15 @@ export default function Landing() {
           </div>
 
           <div className="flex flex-1 flex-col gap-4">
-            <div className="flex h-72 w-full flex-col items-center justify-center rounded-xl bg-neutral-200 text-neutral-400">
-              <BarChart3 className="mb-3 h-12 w-12" />
-              <span className="text-sm">Dashboard Preview Illustration</span>
-              <span className="mt-1 text-xs">[ Hero Image / App Screenshot ]</span>
+            <div className="relative w-full overflow-hidden rounded-xl border border-neutral-200 shadow-sm">
+              <img
+                src={dashboardPreview}
+                alt="FitTrack dashboard preview"
+                className="h-72 w-full object-cover object-top"
+              />
+              <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1 text-xs text-white">
+                <Zap className="h-3 w-3" /> Live dashboard preview
+              </span>
             </div>
             <div className="flex gap-3">
               {[
