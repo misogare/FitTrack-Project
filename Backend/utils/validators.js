@@ -77,6 +77,31 @@ export const mealValidation = [
   body('meal_date').isISO8601()
 ];
 
+export const foodValidation = [
+  body('name').trim().notEmpty().withMessage('Food name is required').isLength({ max: 100 }),
+  body('barcode').optional({ nullable: true }).trim().isLength({ max: 64 }).withMessage('Barcode is too long'),
+  body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
+  body('serving_size').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Serving size must be positive'),
+  body('serving_unit').optional({ nullable: true }).trim().isLength({ max: 20 }),
+  body('calories').isInt({ min: 0 }).withMessage('Calories must be a positive number'),
+  body('protein_g').optional({ nullable: true }).isFloat({ min: 0 }),
+  body('carbs_g').optional({ nullable: true }).isFloat({ min: 0 }),
+  body('fat_g').optional({ nullable: true }).isFloat({ min: 0 })
+];
+
+export const nutritionGoalValidation = [
+  body('calories').optional().isInt({ min: 0, max: 20000 }).withMessage('Calorie goal must be a positive number'),
+  body('protein').optional().isFloat({ min: 0, max: 2000 }).withMessage('Protein goal must be a positive number'),
+  body('carbs').optional().isFloat({ min: 0, max: 2000 }).withMessage('Carbs goal must be a positive number'),
+  body('fat').optional().isFloat({ min: 0, max: 2000 }).withMessage('Fat goal must be a positive number'),
+  body('hydration_litres').optional().isFloat({ min: 0, max: 20 }).withMessage('Hydration goal must be a positive number')
+];
+
+export const waterLogValidation = [
+  body('log_date').isISO8601().withMessage('Valid date is required'),
+  body('amount_ml').isInt({ min: 1, max: 10000 }).withMessage('Amount must be between 1 and 10000 ml')
+];
+
 export const goalValidation = [
   body('goal_type').trim().notEmpty().isLength({ max: 50 }),
   body('target_value').isFloat({ min: 0 }),

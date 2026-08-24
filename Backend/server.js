@@ -6,6 +6,9 @@ import authRoutes from './routes/auth.js';
 import workoutRoutes from './routes/workouts.js';
 import mealRoutes from './routes/meals.js';
 import goalRoutes from './routes/goals.js';
+import planRoutes from './routes/plan.js';
+import nutritionRoutes from './routes/nutrition.js';
+import foodRoutes from './routes/foods.js';
 import dashboardRoutes from './routes/dashboard.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -34,7 +37,9 @@ app.use('/api/workouts', workoutRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/goals', goalRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
+app.use('/api/plans', planRoutes);
+app.use('/api/nutrition', nutritionRoutes);
+app.use('/api/foods', foodRoutes);
 // Error handling
 app.use(errorHandler);
 
