@@ -9,11 +9,19 @@ const __dirname = dirname(__filename);
 
 const sql = readFileSync(join(__dirname, '..', 'init-db.sql'), 'utf8');
 
-// Strip the CREATE DATABASE / USE lines — Railway's DB is already provisioned.
+// Strip the CREATE DATABASE + USE block — Railway's DB is already provisioned.
+// Also remove any orphaned CHARACTER SET / COLLATE lines left from that block.
 // Send the rest as a single multi-statement query so no splitting issues.
 const clean = sql
   .split('\n')
-  .filter(line => !line.startsWith('CREATE DATABASE') && !line.startsWith('USE '))
+  .filter(line => {
+    const trimmed = line.trim().toUpperCase();
+    if (trimmed.startsWith('CREATE DATABASE')) return false;
+    if (trimmed.startsWith('USE ')) return false;
+    if (trimmed === 'CHARACTER SET UTF8MB4') return false;
+    if (trimmed === 'COLLATE UTF8MB4_UNICODE_CI;') return false;
+    return true;
+  })
   .join('\n')
   .trim();
 
