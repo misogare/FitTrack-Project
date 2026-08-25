@@ -870,6 +870,7 @@ export default function Analytics() {
               <label className="field">
                 <span className="field-label">Date</span>
                 <input type="date" value={measureForm.log_date || ''} onChange={e => setMeasure('log_date', e.target.value)} />
+                <small>Format: YYYY-MM-DD (e.g. 2025-06-15)</small>
               </label>
               <div className="form-grid">
                 <label className="field">

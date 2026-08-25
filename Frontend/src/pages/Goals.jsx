@@ -452,10 +452,12 @@ function GoalFormModal({ title, subtitle, initial, current, onClose, onSubmit })
             <label className="field">
               <span className="field-label">Start Date</span>
               <input type="date" value={form.start_date || ''} onChange={e => set('start_date', e.target.value)} />
+              <small>Format: YYYY-MM-DD</small>
             </label>
             <label className="field">
               <span className="field-label">Target Date *</span>
               <input type="date" value={form.target_date || ''} onChange={e => set('target_date', e.target.value)} />
+              <small>Format: YYYY-MM-DD (e.g. 2025-12-31)</small>
             </label>
           </div>
           <div className="modal-foot">
@@ -557,6 +559,7 @@ function DetailsModal({ goal, onClose, onLog, onComplete }) {
               <label className="field">
                 <span className="field-label">Date</span>
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+                <small>Format: YYYY-MM-DD</small>
               </label>
               <label className="field">
                 <span className="field-label">Value {unit ? `(${unit})` : ''}</span>

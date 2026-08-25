@@ -21,6 +21,20 @@ export const loginValidation = [
   body('password').notEmpty()
 ];
 
+export const updateProfileValidation = [
+  body('first_name').optional().trim().notEmpty().withMessage('First name is required').isLength({ max: 50 }),
+  body('last_name').optional().trim().notEmpty().withMessage('Last name is required').isLength({ max: 50 }),
+  body('date_of_birth')
+    .optional({ checkFalsy: true })
+    .custom(v => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(new Date(v).getTime()))
+    .withMessage('Date of birth must be in YYYY-MM-DD format (e.g. 1999-10-10)'),
+  body('gender').optional().isIn(['Male', 'Female', 'Other', 'Prefer not to say']).withMessage('Invalid gender'),
+  body('height_cm').optional({ nullable: true }).isFloat({ min: 0, max: 300 }).withMessage('Height must be between 0 and 300 cm'),
+  body('weight_kg').optional({ nullable: true }).isFloat({ min: 0, max: 500 }).withMessage('Weight must be between 0 and 500 kg'),
+  body('fitness_level').optional().isIn(['Beginner', 'Intermediate', 'Advanced']).withMessage('Invalid fitness level'),
+  body('avatar_style').optional().isLength({ max: 30 })
+];
+
 export const changePasswordValidation = [
   body('current_password').notEmpty().withMessage('Current password is required'),
   body('new_password')
@@ -167,4 +181,63 @@ export const updateSettingsValidation = [
 
 export const deleteAccountValidation = [
   body('confirm').equals('DELETE').withMessage('Confirmation is required to delete your account')
+];
+
+/* ============================================================
+   PLAN VALIDATORS
+============================================================ */
+
+export const planValidation = [
+  body('plan_name').trim().notEmpty().withMessage('Plan name is required').isLength({ max: 100 }).withMessage('Plan name must be 100 characters or less'),
+  body('description').optional({ nullable: true }).trim().isLength({ max: 500 }).withMessage('Description must be 500 characters or less'),
+  body('difficulty').optional({ nullable: true }).isIn(['Beginner', 'Intermediate', 'Advanced']).withMessage('Difficulty must be Beginner, Intermediate, or Advanced'),
+  body('duration_weeks').optional({ nullable: true }).isInt({ min: 1, max: 52 }).withMessage('Duration must be between 1 and 52 weeks'),
+  body('status').optional().isIn(['Active', 'Paused', 'Draft', 'Completed']).withMessage('Invalid status'),
+  body('items').optional().isArray().withMessage('Items must be an array'),
+  body('items.*.activity_name').optional().trim().notEmpty().withMessage('Activity name is required').isLength({ max: 100 }),
+  body('items.*.activity_type').optional().trim().notEmpty().withMessage('Activity type is required').isLength({ max: 50 }),
+  body('items.*.target_duration_minutes').optional({ nullable: true }).isInt({ min: 1 }).withMessage('Duration must be at least 1 minute'),
+  body('items.*.target_intensity').optional({ nullable: true }).isIn(['Low', 'Medium', 'High']).withMessage('Intensity must be Low, Medium, or High'),
+  body('items.*.day_number').optional().isInt({ min: 1 }).withMessage('Day number must be at least 1'),
+  body('items.*.exercises').optional().isArray().withMessage('Exercises must be an array'),
+  body('items.*.exercises.*.name').optional().trim().notEmpty().withMessage('Exercise name is required'),
+  body('items.*.exercises.*.sets').optional({ nullable: true }).isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
+  body('items.*.exercises.*.reps').optional({ nullable: true }).trim().isLength({ max: 20 }).withMessage('Reps must be 20 characters or less'),
+  body('items.*.exercises.*.weight_kg').optional({ nullable: true }).isFloat({ min: 0, max: 2000 }).withMessage('Weight must be between 0 and 2000 kg'),
+  body('items.*.exercises.*.rest_seconds').optional({ nullable: true }).isInt({ min: 0, max: 3600 }).withMessage('Rest must be between 0 and 3600 seconds'),
+];
+
+export const planUpdateValidation = [
+  body('plan_name').optional().trim().notEmpty().withMessage('Plan name is required').isLength({ max: 100 }).withMessage('Plan name must be 100 characters or less'),
+  body('description').optional({ nullable: true }).trim().isLength({ max: 500 }).withMessage('Description must be 500 characters or less'),
+  body('difficulty').optional({ nullable: true }).isIn(['Beginner', 'Intermediate', 'Advanced']).withMessage('Difficulty must be Beginner, Intermediate, or Advanced'),
+  body('duration_weeks').optional({ nullable: true }).isInt({ min: 1, max: 52 }).withMessage('Duration must be between 1 and 52 weeks'),
+];
+
+export const planStatusValidation = [
+  body('status').isIn(['Active', 'Paused', 'Completed', 'Draft']).withMessage('Invalid status'),
+];
+
+export const planExerciseValidation = [
+  body('exercise_id').isInt({ min: 1 }).withMessage('Exercise ID is required'),
+  body('sets').optional({ nullable: true }).isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
+  body('reps').optional({ nullable: true }).trim().isLength({ max: 20 }).withMessage('Reps must be 20 characters or less'),
+  body('weight_kg').optional({ nullable: true }).isFloat({ min: 0, max: 2000 }).withMessage('Weight must be between 0 and 2000 kg'),
+  body('rest_seconds').optional({ nullable: true }).isInt({ min: 0, max: 3600 }).withMessage('Rest must be between 0 and 3600 seconds'),
+];
+
+export const planExerciseUpdateValidation = [
+  body('sets').optional({ nullable: true }).isInt({ min: 1, max: 100 }).withMessage('Sets must be between 1 and 100'),
+  body('reps').optional({ nullable: true }).trim().isLength({ max: 20 }).withMessage('Reps must be 20 characters or less'),
+  body('weight_kg').optional({ nullable: true }).isFloat({ min: 0, max: 2000 }).withMessage('Weight must be between 0 and 2000 kg'),
+  body('rest_seconds').optional({ nullable: true }).isInt({ min: 0, max: 3600 }).withMessage('Rest must be between 0 and 3600 seconds'),
+  body('sort_order').optional().isInt({ min: 0 }).withMessage('Sort order must be a positive number'),
+];
+
+export const planExerciseSwapValidation = [
+  body('exercise_id').isInt({ min: 1 }).withMessage('Exercise ID is required'),
+];
+
+export const startWorkoutValidation = [
+  body('notes').optional({ nullable: true }).trim().isLength({ max: 255 }).withMessage('Notes must be 255 characters or less'),
 ];

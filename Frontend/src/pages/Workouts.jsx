@@ -513,6 +513,7 @@ useEffect(() => { loadSummary(); }, []);
                     )
                   }
                 />
+                <small>Format: YYYY-MM-DD (e.g. 2025-06-15)</small>
               </label>
 
             </div>
@@ -779,6 +780,7 @@ useEffect(() => { loadSummary(); }, []);
                 setPage(1);
               }}
             />
+            <small>Format: YYYY-MM-DD</small>
           </label>
 
           <div

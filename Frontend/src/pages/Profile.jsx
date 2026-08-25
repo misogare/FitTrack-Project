@@ -10,10 +10,16 @@ const pad = n => String(n).padStart(2, '0');
 const fmtDate = s => {
   if (!s) return '—';
   const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return new Date(m[1], m[2] - 1, m[3]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  if (m) {
+    if (m[1] === '0000' || m[2] === '00' || m[3] === '00') return '—'; // MySQL zero-date (invalid input saved earlier)
+    return new Date(m[1], m[2] - 1, m[3]).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? s : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 };
+// Date of birth is stored as YYYY-MM-DD. Anything else (e.g. a MySQL '0000-00-00'
+// zero-date left over from a previously invalid save) should be treated as "not set".
+const isValidDob = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime());
 const fmtMemberSince = s => {
   if (!s) return '—';
   const d = new Date(s);
@@ -114,7 +120,7 @@ export default function Profile() {
       await api.updateProfile({
         first_name: profile.first_name,
         last_name: profile.last_name,
-        date_of_birth: profile.date_of_birth,
+        date_of_birth: isValidDob(profile.date_of_birth) ? profile.date_of_birth : null,
         gender: profile.gender,
         height_cm: profile.height_cm,
         weight_kg: profile.weight_kg,
@@ -284,12 +290,25 @@ export default function Profile() {
                 <div className="detail-field" key={key}>
                   <label>{label}</label>
                   {editing && key !== 'email' ? (
-                    <input
-                      className="detail-value"
-                      value={profile[key] ?? ''}
-                      onChange={e => setField(key, e.target.value)}
-                      placeholder={key === 'gender' ? 'Male / Female / Other' : ''}
-                    />
+                    key === 'date_of_birth' ? (
+                      <>
+                        <input
+                          type="date"
+                          className="detail-value"
+                          value={isValidDob(profile.date_of_birth) ? profile.date_of_birth : ''}
+                          max={new Date().toISOString().slice(0, 10)}
+                          onChange={e => setField('date_of_birth', e.target.value)}
+                        />
+                        <small>Format: YYYY-MM-DD (e.g. 1999-10-10)</small>
+                      </>
+                    ) : (
+                      <input
+                        className="detail-value"
+                        value={profile[key] ?? ''}
+                        onChange={e => setField(key, e.target.value)}
+                        placeholder={key === 'gender' ? 'Male / Female / Other' : ''}
+                      />
+                    )
                   ) : (
                     <div className="detail-value">
                       {key === 'email'
