@@ -1,4 +1,3 @@
-// Run init-db.sql in Railway (the DB already exists, so skip CREATE DATABASE / USE)
 import pool from '../config/db.js';
 import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
@@ -9,9 +8,7 @@ const __dirname = dirname(__filename);
 
 const sql = readFileSync(join(__dirname, '..', 'init-db.sql'), 'utf8');
 
-// Strip the CREATE DATABASE + USE block — Railway's DB is already provisioned.
-// Also remove any orphaned CHARACTER SET / COLLATE lines left from that block.
-// Send the rest as a single multi-statement query so no splitting issues.
+// Strip CREATE DATABASE / USE / orphaned charset lines
 const clean = sql
   .split('\n')
   .filter(line => {
@@ -27,21 +24,26 @@ const clean = sql
 
 console.log('Running schema...');
 
+const conn = await pool.getConnection();
+
 try {
-  // query() with multipleStatements needed — execute() is single-statement only
-  const conn = await pool.getConnection();
-  try {
-    await conn.query({ sql: clean, multipleStatements: true });
-    console.log('All tables created successfully!');
-  } finally {
-    conn.release();
+  // Split into individual statements and execute one by one
+  const statements = clean
+    .split(';')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .map(s => s + ';');
+
+  for (const stmt of statements) {
+    await conn.query(stmt);
   }
+
+  console.log('All tables created successfully!');
 } catch (err) {
-  if (err.code === 'ER_TABLE_EXISTS') {
-    console.log('Tables already exist (skipping).');
-  } else {
-    console.error(`Failed: ${err.message}`);
-    throw err;
-  }
+  console.error(`Failed: ${err.message}`);
+  throw err;
+} finally {
+  conn.release();
 }
+
 process.exit(0);
