@@ -9,30 +9,31 @@ const __dirname = dirname(__filename);
 
 const sql = readFileSync(join(__dirname, '..', 'init-db.sql'), 'utf8');
 
-// Strip the CREATE DATABASE / USE lines — Railway's DB is already provisioned
-const statements = sql
-  .split(';')
-  .map(s => s.trim())
-  .filter(s => s.length > 0 && !s.startsWith('CREATE DATABASE') && !s.startsWith('USE '));
+// Strip the CREATE DATABASE / USE lines — Railway's DB is already provisioned.
+// Send the rest as a single multi-statement query so no splitting issues.
+const clean = sql
+  .split('\n')
+  .filter(line => !line.startsWith('CREATE DATABASE') && !line.startsWith('USE '))
+  .join('\n')
+  .trim();
 
-console.log(`Found ${statements.length} SQL statements to execute...`);
+console.log('Running schema...');
 
-for (let i = 0; i < statements.length; i++) {
-  const stmt = statements[i];
+try {
+  // query() with multipleStatements needed — execute() is single-statement only
+  const conn = await pool.getConnection();
   try {
-    await pool.execute(stmt);
-    // Print first 60 chars to show progress
-    const preview = stmt.replace(/\s+/g, ' ').trim().slice(0, 70);
-    console.log(`  [${i + 1}/${statements.length}] ${preview}...`);
-  } catch (err) {
-    if (err.code === 'ER_TABLE_EXISTS') {
-      console.log(`  [${i + 1}/${statements.length}] (table already exists, skipping)`);
-    } else {
-      console.error(`  [${i + 1}/${statements.length}] FAILED: ${err.message}`);
-      throw err;
-    }
+    await conn.query({ sql: clean, multipleStatements: true });
+    console.log('All tables created successfully!');
+  } finally {
+    conn.release();
+  }
+} catch (err) {
+  if (err.code === 'ER_TABLE_EXISTS') {
+    console.log('Tables already exist (skipping).');
+  } else {
+    console.error(`Failed: ${err.message}`);
+    throw err;
   }
 }
-
-console.log('\nAll tables created successfully!');
 process.exit(0);
