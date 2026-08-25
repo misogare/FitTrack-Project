@@ -319,7 +319,7 @@ function ActivePlanBanner({ plan }) {
       </div>
 
       <div className="plan-banner-actions">
-        <Link to="/workouts" className="button button-outline" style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}>
+        <Link to="/workouts" className="button button-outline" style={{  borderColor: 'rgba(255,255,255,0.3)' }}>
           <Icon name="edit" /> Edit
         </Link>
         {todayItem && (
