@@ -1,7 +1,0 @@
-[build]
-  watchPatterns = ["Backend/**"]
-
-[deploy]
-  # Run npm install + npm start inside Backend/
-  buildCommand = "cd Backend && npm install"
-  startCommand = "cd Backend && npm start"

@@ -1,0 +1,8 @@
+{
+  "name": "fittrack",
+  "private": true,
+  "scripts": {
+    "start": "cd Backend && node server.js",
+    "postinstall": "cd Backend && npm install"
+  }
+}
