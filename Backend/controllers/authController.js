@@ -11,12 +11,13 @@ const generateToken = (userId) => {
 };
 
 const setAuthCookie = (res, token) => {
-  const isProd = process.env.NODE_ENV === 'production';
+  // Railway and Vercel are different domains — cross-site cookies need sameSite:'none'
+  const isDeployed = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
   res.cookie('fittrack_token', token, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    secure: isDeployed,            // required when sameSite is 'none'
+    sameSite: isDeployed ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000,   // 24 hours
     path: '/'
   });
 };

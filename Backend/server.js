@@ -19,9 +19,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS - adjust origin for production
+// CORS — allow Vercel preview + production domains, plus local dev
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    const explicit = process.env.FRONTEND_URL;
+    if (explicit && origin === explicit) return callback(null, true);
+
+    // Local dev
+    if (origin.startsWith('http://localhost:')) return callback(null, true);
+
+    // Vercel preview / production deployments
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
