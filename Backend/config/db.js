@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Railway provides DATABASE_URL; local dev uses DB_HOST/DB_USER/DB_PASSWORD/DB_NAME
-const dbUrl = process.env.DATABASE_URL;
+// Railway provides MYSQL_URL; local dev uses DB_HOST/DB_USER/DB_PASSWORD/DB_NAME
+const dbUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
 
 const pool = dbUrl
   ? mysql.createPool({
