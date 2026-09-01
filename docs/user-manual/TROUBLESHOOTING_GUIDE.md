@@ -87,7 +87,14 @@ For each issue: **Symptom**, **Possible causes**, **Recommended steps**, **Solut
 - **Solution:** stop the conflicting process, or change `PORT` in `Backend/.env` (and update `FRONTEND_URL`/`VITE_API_URL` to match) / pass Vite a different port.
 - **Root cause & prevention:** environment collision, not a bug. Prevention: always stop dev servers cleanly (Ctrl+C) rather than closing the terminal window.
 
-### 12. `npm run seed:demo` "undid" data I was manually testing with
+### 12. Backend returns `500` with `getaddrinfo ENOTFOUND ...aivencloud.com` (or login/every DB-backed request fails)
+
+- **Possible causes:** the Aiven MySQL free plan automatically powers itself off after a period with no connections (this happened for real ~1 day after the database was first created). `/api/health` still returns `200` in this state since it doesn't touch the database — only DB-backed routes (login, dashboard, etc.) fail.
+- **Recommended steps:** check the service state in the Aiven console (or `GET /v1/project/<project>/service/<service_name>` via the Aiven API) — if `state` is `POWEROFF`, that's the cause.
+- **Solution:** power it back on: `PUT https://api.aiven.io/v1/project/<project>/service/<service_name>` with body `{"powered": true}` (needs an Aiven API token from Account → API Tokens). It takes a couple of minutes to go from `REBUILDING` to `RUNNING`; no data is lost. A `.github/workflows/keep-alive.yml` workflow now pings the backend every 20 minutes specifically to stop this recurring — if it fires again anyway, check that the workflow is actually enabled and running under the repo's **Actions** tab.
+- **Root cause & prevention:** free-tier resource conservation on Aiven's end, not a FitTrack bug. Prevented going forward by the keep-alive workflow; if it's ever removed, this will start happening again after ~a day of no traffic.
+
+### 13. `npm run seed:demo` "undid" data I was manually testing with
 
 - **Possible causes:** the seeder is intentionally idempotent — re-running it **deletes and re-creates** the demo user's sample data, by design, so the demo account resets to a known-good state.
 - **Recommended steps:** check whether the data you lost belonged to the `demo@fittrack.local` account specifically, versus your own separately-registered test account (which the seeder never touches).
